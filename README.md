@@ -15,7 +15,3 @@ This repository contains implementations of machine learning algorithms and data
 1. Clone the repository: `git clone https://github.com/DorsaRoh/ML-DSA.git`
 2. Navigate to the desired directory
 3. Run the scripts and explore implementations
-
-## License
-
-This project is licensed under the MIT License.
