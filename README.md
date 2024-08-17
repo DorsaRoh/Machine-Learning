@@ -5,6 +5,8 @@ This repository contains implementations of machine learning algorithms and data
 - **Machine Learning**: Implementations of ML algorithms without external libraries (using only numpy)
 - **Data Structures & Algorithms**: Fundamental data structures and algorithms, with additional practice questions
 
+[![Build Neural Networks from Scratch in 4 minutes](https://img.youtube.com/vi/oVVJbWgZySY/0.jpg)](https://www.youtube.com/watch?v=oVVJbWgZySY&t)
+
 # 1. Neural Networks from Scratch
 
 In the context of artificial neural networks:
