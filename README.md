@@ -27,26 +27,26 @@ An artificial neural network is a statistical model that:
 1. Learns patterns from training data
 2. Applies these learned patterns to new, unseen data
 
-## 2. How Neural Networks Work
+## How Neural Networks Work
 
 Now that we know what a neural network is, let's dive into how it operates.
 
 ### Connections Between Neurons
 
 - Each neuron in one layer is connected to all neurons in the next layer.
-- The strength of each connection is called its "weight".
+- The strength of each connection is called its `"weight"`.
 - During training, these weights are adjusted to identify patterns in the data.
 
 ### How a Neuron's Activation is Determined
 
 The activation of a neuron is calculated based on:
-1. The activations of all neurons in the previous layer
+1. The activations of all neurons in the **previous** layer
 2. The weights of the connections to those neurons
 
 Here's how it works:
 1. Multiply each incoming activation by its corresponding weight
 2. Sum up all these products
-3. Add a special value called the "bias"
+3. Add a special value called the `"bias"`
 
 This can be represented by the formula:
 
@@ -55,11 +55,11 @@ weighted_sum = w1*a1 + w2*a2 + ... + wn*an + bias
 ```
 
 Where:
-- wi is the weight of the connection from neuron i in the previous layer
-- ai is the activation of neuron i in the previous layer
+- `wi` is the weight of the connection from neuron `i` in the previous layer
+- `ai` is the activation of neuron `i` in the previous layer
 - bias is an extra adjustable value
 
-![Weighted Sum Visualization](root/assets/Neural-Networks/4-weightedSum.png)
+<img src="assets/Neural-Networks/4-weightedSum.png" alt="Neural Network Architecture" width="300" height="auto">
 
 ### The Role of Bias
 
@@ -69,7 +69,7 @@ The bias serves an important function:
 - A positive bias makes the neuron more likely to activate
 - A negative bias makes it less likely to activate
 
-![Weights and Bias Visualization](root/assets/Neural-Networks/5-weightsAndBias.png)
+<img src="assets/Neural-Networks/5-weightsAndBias.png" alt="Neural Network Architecture" width="300" height="auto">
 
 ### Activation Functions
 
@@ -78,15 +78,14 @@ After calculating the weighted sum, we apply an "activation function". Common ch
 1. Sigmoid function: Maps the output to a range between 0 and 1
 2. ReLU (Rectified Linear Unit): Outputs the input if it's positive, otherwise outputs 0
 
-For this guide, we'll focus on ReLU:
+In this guide, we'll focus on ReLU:
 
 ```
 ReLU(x) = max(0, x)
 ```
-
 ReLU is popular because it helps the network learn more effectively.
 
-## 3. Training the Neural Network
+## Training the Neural Network
 
 Now that we understand the basic structure and operation of a neural network, let's look at how it learns.
 
@@ -109,7 +108,7 @@ To train our network, we need to measure how well it's doing. We do this with a 
 3. Square this difference (to make all values positive)
 4. Sum these squared differences for all output neurons
 
-The result is called the "loss". The smaller the loss, the better the network is performing.
+The result is called the "loss". **The smaller the loss, the better the network is performing.**
 
 ### Gradient Descent and Backpropagation
 
@@ -125,9 +124,10 @@ Here's how it works:
 2. Update weights and biases in the direction that reduces the loss
 3. Repeat this process many times
 
-![Backpropagation Visualization](root/assets/Neural-Networks/10-backprop.png)
+<img src="assets/Neural-Networks/10-backprop.png" alt="Neural Network Architecture" width="300" height="auto">
 
-## 4. Putting It All Together
+
+## Putting It All Together
 
 Training a neural network involves repeating these steps many times:
 
@@ -138,9 +138,9 @@ Training a neural network involves repeating these steps many times:
 
 After many iterations, the network learns to recognize patterns in the training data and can apply this knowledge to new, unseen data.
 
-## 5. A Simple Python Implementation
+## A Simple Python Implementation
 
-Here's a basic implementation of a neural network in Python:
+Here's a basic implementation of a neural network (feed-forward, multilayer percepton) from scratch in Python:
 
 ```python
 import numpy as np
@@ -181,9 +181,7 @@ class NeuralNetwork:
         # Training code here (implement backpropagation)
         pass
 ```
+To make it fully functional, you would need to implement the backpropagation algorithm in the `train` method.
 
-This code provides a basic structure for a neural network. To make it fully functional, you would need to implement the backpropagation algorithm in the `train` method.
-
-## Conclusion
-
-Congratulations! You've just taken your first steps into the world of neural networks. While there's much more to learn, you now have a solid foundation to build upon. Remember, the key to mastering neural networks is practice and experimentation. Happy learning!
+## Congrats!
+You've just taken your first steps into the world of neural networks. While there's much more to learn, you now have a solid foundation to build upon. Remember, the key to mastering neural networks is practice and experimentation. Happy learning!
