@@ -1,7 +1,5 @@
 # ML from Scratch
 
-## Overview
-
 This repository contains implementations of machine learning algorithms and data structures/algorithms from scratch.
 
 
