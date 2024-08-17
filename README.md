@@ -81,7 +81,8 @@ After calculating the weighted sum, we apply an "activation function". Common ch
 In this guide, we'll focus on ReLU:
 
 ```
-ReLU(x) = max(0, x)
+def relu(self, x):
+        return np.maximum(0, x)
 ```
 ReLU is popular because it helps the network learn more effectively.
 
