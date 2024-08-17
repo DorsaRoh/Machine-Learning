@@ -19,7 +19,7 @@ In the context of artificial neural networks:
   2. Hidden layer(s)
   3. Output layer
 
-![Neural Network Architecture](assets/Neural-Networks/1-NN.png)
+<img src="assets/Neural-Networks/1-NN.png" alt="Neural Network Architecture" width="300" height="auto">
 
 ### What Does a Neural Network Do?
 
