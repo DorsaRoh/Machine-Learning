@@ -50,7 +50,7 @@ Here's how it works:
 
 This can be represented by the formula:
 
-```
+```python
 weighted_sum = w1*a1 + w2*a2 + ... + wn*an + bias
 ```
 
@@ -80,7 +80,7 @@ After calculating the weighted sum, we apply an "activation function". Common ch
 
 In this guide, we'll focus on ReLU:
 
-```
+```python
 def relu(self, x):
         return np.maximum(0, x)
 ```
@@ -110,6 +110,11 @@ To train our network, we need to measure how well it's doing. We do this with a 
 4. Sum these squared differences for all output neurons
 
 The result is called the "loss". **The smaller the loss, the better the network is performing.**
+
+```python
+def mse_loss(self, y, activations):    
+        return np.mean((activations-y)**2)
+```
 
 ### Gradient Descent and Backpropagation
 
@@ -178,8 +183,11 @@ class NeuralNetwork:
             inputs = layer.forward(inputs)
         return inputs
 
+    def mse_loss(self, y, activations):    
+        return np.mean((activations-y)**2)
+
     def train(self, X, y, learning_rate, epochs):
-        # Training code here (implement backpropagation)
+        # Training code here (backpropagation)
         pass
 ```
 To make it fully functional, you would need to implement the backpropagation algorithm in the `train` method.
