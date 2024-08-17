@@ -2,107 +2,145 @@
 
 This repository contains implementations of machine learning algorithms and data structures/algorithms from scratch.
 
-
 - **Machine Learning**: Implementations of ML algorithms without external libraries (using only numpy)
 - **Data Structures & Algorithms**: Fundamental data structures and algorithms, with additional practice questions
-- **Biological Parallels**: Exploration of analogies to biological systems and nature
-
 
 # 1. Neural Networks from Scratch
 
-An in-depth explanation of building a neural network from scratch for MNIST digit classification. The MNIST dataset consists of images of single digits (0-9). Our goal is to create a neural network that can accurately classify these digits.
+In the context of artificial neural networks:
+- A neuron is a simple unit that holds a number.
+- This number is called its "activation".
 
-## Table of Contents
+### What is a Neural Network?
 
-1. [Architecture](#architecture)
-2. [The Math Behind Neural Networks](#the-math-behind-neural-networks)
-3. [Implementation](#implementation)
-4. [Training the Network](#training-the-network)
-5. [Evaluation](#evaluation)
-6. [Conclusion](#conclusion)
+- A neural network is made up of many neurons organized into layers.
+- There are typically three types of layers:
+  1. Input layer
+  2. Hidden layer(s)
+  3. Output layer
 
-## Architecture
+![Neural Network Architecture](../assets/Neural-Networks/1-NN.png)
 
-![Neural Network Architecture](root/assets/Neural-Networks/1-NN.png)
+### What Does a Neural Network Do?
 
-Our neural network consists of the following layers:
+An artificial neural network is a statistical model that:
+1. Learns patterns from training data
+2. Applies these learned patterns to new, unseen data
 
-- Input layer: 784 neurons (one for each pixel in the 28x28 MNIST images)
-- Hidden layer 1: 128 neurons
-- Hidden layer 2: 64 neurons
-- Output layer: 10 neurons (one for each digit 0-9)
+## 2. How Neural Networks Work
 
-Total parameters: 13,002 weights and biases
+Now that we know what a neural network is, let's dive into how it operates.
 
-The network processes information as follows:
+### Connections Between Neurons
 
-1. Input layer: Each neuron holds one pixel of an image. The activation value (between 0-1) represents the brightness of the pixel.
-2. Hidden layers: These layers extract features from the input.
-   - First hidden layer: May correspond to "little edges" in the images
-   - Second hidden layer: May correspond to patterns from the edges (e.g., loops, lines)
-3. Output layer: Each neuron represents a digit (0-9). The neuron with the highest activation indicates the network's prediction.
+- Each neuron in one layer is connected to all neurons in the next layer.
+- The strength of each connection is called its "weight".
+- During training, these weights are adjusted to identify patterns in the data.
 
-Note: While we hope the hidden layers correspond to these features, in reality, the network optimizes to minimize the cost function and may not explicitly capture these patterns.
+### How a Neuron's Activation is Determined
 
-![Weights Visualization](root/assets/Neural-Networks/3-weights.png)
+The activation of a neuron is calculated based on:
+1. The activations of all neurons in the previous layer
+2. The weights of the connections to those neurons
 
-## The Math Behind Neural Networks
+Here's how it works:
+1. Multiply each incoming activation by its corresponding weight
+2. Sum up all these products
+3. Add a special value called the "bias"
+
+This can be represented by the formula:
+
+```
+weighted_sum = w1*a1 + w2*a2 + ... + wn*an + bias
+```
+
+Where:
+- wi is the weight of the connection from neuron i in the previous layer
+- ai is the activation of neuron i in the previous layer
+- bias is an extra adjustable value
+
+![Weighted Sum Visualization](root/assets/Neural-Networks/4-weightedSum.png)
+
+### The Role of Bias
+
+The bias serves an important function:
+- It shifts the activation function
+- This allows the neuron to adjust its sensitivity to inputs
+- A positive bias makes the neuron more likely to activate
+- A negative bias makes it less likely to activate
+
+![Weights and Bias Visualization](root/assets/Neural-Networks/5-weightsAndBias.png)
 
 ### Activation Functions
 
-We use the ReLU (Rectified Linear Unit) activation function for our hidden layers. ReLU is defined as:
+After calculating the weighted sum, we apply an "activation function". Common choices include:
+
+1. Sigmoid function: Maps the output to a range between 0 and 1
+2. ReLU (Rectified Linear Unit): Outputs the input if it's positive, otherwise outputs 0
+
+For this guide, we'll focus on ReLU:
 
 ```
 ReLU(x) = max(0, x)
 ```
 
-This function introduces non-linearity into our network, allowing it to learn complex patterns.
+ReLU is popular because it helps the network learn more effectively.
 
-### Weighted Sum and Bias
+## 3. Training the Neural Network
 
-For each neuron, we calculate the weighted sum of its inputs plus a bias term:
-
-```
-weighted_sum = w1*a1 + w2*a2 + w3*a3 + ... + wn*an + bias
-```
-
-Where:
-- wi: weight for input i
-- ai: activation from the previous layer's neuron i
-- bias: a learnable offset
-
-![Weighted Sum Visualization](root/assets/Neural-Networks/4-weightedSum.png)
-
-The weights determine what pattern the neuron is looking for, while the bias affects how easily the neuron activates.
-
-![Weights and Bias Visualization](root/assets/Neural-Networks/5-weightsAndBias.png)
+Now that we understand the basic structure and operation of a neural network, let's look at how it learns.
 
 ### Forward Propagation
 
-Forward propagation is the process of passing input through the network to get an output. For each layer:
+This is the process of passing input through the network to get an output:
 
-1. Calculate the weighted sum for each neuron
-2. Apply the activation function to get the neuron's output
+1. Start with the input layer
+2. For each subsequent layer:
+   a. Calculate the weighted sum for each neuron
+   b. Apply the activation function
+3. Repeat until we reach the output layer
 
-This process is repeated for each layer until we reach the output layer.
+### Measuring Performance: The Loss Function
 
-### Backpropagation
+To train our network, we need to measure how well it's doing. We do this with a loss function:
 
-Backpropagation is the algorithm used to train the network. It calculates the gradient of the loss function with respect to each weight by applying the chain rule to iteratively compute gradients for each layer.
+1. Compare the network's output to the desired output
+2. Calculate the difference
+3. Square this difference (to make all values positive)
+4. Sum these squared differences for all output neurons
+
+The result is called the "loss". The smaller the loss, the better the network is performing.
+
+### Gradient Descent and Backpropagation
+
+To improve the network's performance, we need to adjust its weights and biases. We do this using two key concepts:
+
+1. Gradient Descent: A method for minimizing the loss
+2. Backpropagation: An algorithm for calculating how to adjust each weight and bias
+
+Here's how it works:
+
+1. Calculate the gradient of the loss function
+   - This tells us how changing each weight and bias affects the loss
+2. Update weights and biases in the direction that reduces the loss
+3. Repeat this process many times
 
 ![Backpropagation Visualization](root/assets/Neural-Networks/10-backprop.png)
 
-The key steps are:
+## 4. Putting It All Together
 
-1. Compute the error at the output layer
-2. Propagate this error backwards through the network
-3. Update weights and biases using the computed gradients
+Training a neural network involves repeating these steps many times:
 
-![Backpropagation Diagram](root/assets/Neural-Networks/11-backprop-2.png)
+1. Forward propagation: Pass input through the network
+2. Calculate the loss: Measure how far off the output is
+3. Backpropagation: Calculate how to adjust weights and biases
+4. Update weights and biases: Make small adjustments to improve performance
 
-## Implementation
+After many iterations, the network learns to recognize patterns in the training data and can apply this knowledge to new, unseen data.
 
-Here's a basic implementation of our neural network in Python:
+## 5. A Simple Python Implementation
+
+Here's a basic implementation of a neural network in Python:
 
 ```python
 import numpy as np
@@ -144,25 +182,8 @@ class NeuralNetwork:
         pass
 ```
 
-## Training the Network
-
-To train the network:
-
-1. Initialize the network with random weights and biases
-2. For each epoch:
-   a. Perform forward propagation on a batch of training examples
-   b. Compute the loss
-   c. Perform backpropagation to compute gradients
-   d. Update weights and biases using gradient descent
-
-## Evaluation
-
-After training, we can evaluate our network on a separate test set to measure its performance. Common metrics include accuracy, precision, recall, and F1-score.
+This code provides a basic structure for a neural network. To make it fully functional, you would need to implement the backpropagation algorithm in the `train` method.
 
 ## Conclusion
 
-Building a neural network from scratch provides deep insights into how these powerful models work. While frameworks like TensorFlow and PyTorch make it easier to implement complex networks, understanding the fundamentals is crucial for developing intuition and debugging more advanced models.
-
-Remember, this implementation is meant for educational purposes. For real-world applications, use established libraries that offer optimized performance and additional features.
-
-Happy coding and happy learning!
+Congratulations! You've just taken your first steps into the world of neural networks. While there's much more to learn, you now have a solid foundation to build upon. Remember, the key to mastering neural networks is practice and experimentation. Happy learning!
