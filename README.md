@@ -10,9 +10,7 @@ This repository contains implementations of machine learning algorithms and data
 
 # 1. Neural Networks from Scratch
 
-## Introduction
-
-This README file provides an in-depth explanation of building a neural network from scratch for MNIST digit classification. The MNIST dataset consists of images of single digits (0-9). Our goal is to create a neural network that can accurately classify these digits.
+An in-depth explanation of building a neural network from scratch for MNIST digit classification. The MNIST dataset consists of images of single digits (0-9). Our goal is to create a neural network that can accurately classify these digits.
 
 ## Table of Contents
 
