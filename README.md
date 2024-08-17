@@ -1,4 +1,4 @@
-# ML & Data Structures/Algorithms from Scratch
+# ML from Scratch
 
 ## Overview
 
