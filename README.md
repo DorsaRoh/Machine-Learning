@@ -199,3 +199,4 @@ If you'd like a video format version, see the video below:
 
 [![Build Neural Networks from Scratch in 4 minutes](https://img.youtube.com/vi/oVVJbWgZySY/0.jpg)](https://www.youtube.com/watch?v=oVVJbWgZySY&t)
 
+*Credit to 3Blue1Brown for the visuals in this file!*
