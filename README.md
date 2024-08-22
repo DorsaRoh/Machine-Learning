@@ -1,4 +1,4 @@
-# Machine Learning: 0 ➔ 1
+# Machine Learning from scratch
 
 This repository contains implementations of machine learning algorithms and data structures/algorithms from scratch.
 
