@@ -2,8 +2,8 @@
 # Machine Learning from Scratch
 Implementations of ML, using only numpy.
 
-1. [Neural Networks](#1-neural-networks)
-2. [Transformer](#2-transformer-from-scratch)
+1. [Neural Networks](#neural-networks)
+2. [Transformer](#transformer)
 
 
 
