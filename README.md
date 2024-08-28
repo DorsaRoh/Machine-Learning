@@ -319,13 +319,13 @@ If you'd like a video format version, see the video below:
 
 ## Overview
 
-## Input
+###  Input
 A collection of real numbers, which could be:
 - A simple list, a 2D matrix, or even a higher-dimensional tensor
 - This collection is progressively transformed through multiple layers, with each layer being an array of real numbers. The transformation continues until the final output layer is reached
     - Ex. in a text-processing model like GPT, the final layer generates a list of numbers representing the probability distribution of all possible next words
 
-## Output:
+### Output:
 A probability distribution over all potential next tokens
 
 ![Output Example](assets/4-outputEX.png)
