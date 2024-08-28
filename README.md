@@ -422,10 +422,13 @@ $$
 
 ### Term Frequency (TF)
 - TF is the number of times a word appears in a document
+
 $$
 \text{tf}(t, d) = f_{t,d}
 $$
+
 - BUT some documenst are longer than others, standard practice for log transformation to **reduce bias**
+
 $$
 \text{tf}(t, d) = \log(1 + f_{t,d})
 $$
@@ -433,18 +436,23 @@ $$
 ### Inverse Document Frequency (IDF)
 - emphasise the more **important words** in each document.
 - Given term(t) in document(d)
+
 $$
 \text{idf}(t, D) = \log\left(\frac{N}{n_t}\right)
 $$
-- N - is the number of documents  
+
+- N - is the number of documents 
+ 
 - $n_t$- is the number of documents that contains t
 
 - $n_t$ decreases the idf increases corresponding to a token that is more likely to be important.
 
 ### TF-IDF Score
+
 $$
 w_{t,d} = \text{tf}(t, d) \times \text{idf}(t, D)
 $$
+
 - **more frequently** a word appears in a **given document** and the **fewer** times it appears in **other** documents the **higher its TF-IDF score.**
 
 ![Tokens](assets/2-tokens.png)
