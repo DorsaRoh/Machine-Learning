@@ -353,7 +353,7 @@ Words that are used and occur in the same context tend to purport similar meanin
 - theoretically, E(man) - E(woman) ~= E(king) - E(queen)
 - the dot product of two vectors, is a measure of how well they align. In this case, this acts as a measure of similarity between words
 
-See `embedding_notes.ipynb` for more on embeddings!
+See `Transformer/embedding_notes.ipynb` for more on embeddings!
 
 Below is an image of the embedding matrix. Each word corresponds to a specific vector, with no reference to its context.
 It is the Attention block's responsibility to update a word's vector with its context. (to be discussed later)
