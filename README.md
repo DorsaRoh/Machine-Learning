@@ -122,8 +122,8 @@ def mse_loss(self, y, activations):
 
 To improve the network's performance, we need to adjust its weights and biases. We do this using two key concepts:
 
-1. Gradient Descent: A method for minimizing the loss
-2. Backpropagation: An algorithm for calculating how to adjust each weight and bias
+1. [Gradient Descent](#gradient-descent): A method for minimizing the loss
+2. [Backpropagation](#backpropagation): An algorithm for calculating how to adjust each weight and bias
 
 Here's how it works:
 
@@ -132,8 +132,53 @@ Here's how it works:
 2. Update weights and biases in the direction that reduces the loss
 3. Repeat this process many times
 
-<img src="assets/Neural-Networks/10-backprop.png" alt="Neural Network Architecture" width="300" height="auto">
+### Gradient Descent
 
+- Optimization algorithm to **minimize the cost function**.
+- Uses gradients to update/adjust weights and biases in the direction that minimizes the cost.
+
+- We look for the **negative** gradient of the cost function, which tells us how we need to change the weights and biases to most efficiently decrease the cost
+
+*Backpropagation is the algorithm used to CALCULATE these gradients*
+
+<img src="assets/Neural-Networks/9-gradientDescent.png" alt="Gradient Descent" width="300" height="auto">
+
+### Backpropagation
+
+The algorithm for determining **how a SINGLE training example would like to nudge the weights and biases, not just if they should go up or down, but in terms of what relative proportions to those changes cause the most rapid decrease to the cost.**
+
+- The magnitude of a gradient is how sensitive the cost function is to each weight and bias.
+    - Ex. you have gradients [3.2, 0.1]. Nudging the weight with gradient 3.2 results in a cost 32x greater, than the cost when nudging (the same way) the weight with gradient 0.1
+
+
+Activation is influenced in three ways:<br>
+```python
+w1*a1 + w2*a2 + ... + wn*an + bias
+```
+- Changing the bias
+- Increasing a weight, in proportion to its activation (the larger the activation, the greater the change)
+- Changing all activations in previous layer, in proportion to its weights (the larger the weight, the greater the change) (but don't have direct influence over activations themselves, just weights and biases)
+
+"Propagate backwards": backpropagation is applied in the direction from the last layer to the first layer.
+<br>------
+<br>
+
+**∂C/∂w = ∂C/∂a × ∂a/∂z × ∂z/∂w**
+
+*where C is cost, w is weight, a is activation (output of neuron), z is the weighted sum (input to neuron, before activation).*
+
+This tells us how much the cost (error) would change if we slightly adjusted a particular weight. 
+- It indicates the direction to change the weight. If the derivative is positive, decreasing the weight will reduce the error, and vice versa.
+- The magnitude tells us how sensitive the error is to changes in this weight. Larger magnitude = weight has bigger impact on error
+
+
+
+
+<img src="assets/Neural-Networks/10-backprop.png" alt="Neural Network Architecture" width="500" height="auto">
+
+Averaged nudges to each weight and bias is the negative gradient of the cost function.
+
+<img src="assets/Neural-Networks/11-backprop-2.png" alt="Neural Network Architecture" width="500" height="auto">
 
 ## Putting It All Together
 
@@ -150,29 +195,81 @@ After many iterations, the network learns to recognize patterns in the training 
 
 Here's a basic implementation of a neural network (feed-forward, multilayer percepton) from scratch in Python:
 
+### The Neuron class:
+
+- Implements forward pass with ReLU activation
+- Implements backward pass, applying the chain rule
+- Updates weights and bias based on the calculated gradients
+
+
+### The Layer class:
+
+- Manages a collection of neurons
+- Implements forward and backward passes for the entire layer
+
+
+### The NeuralNetwork class:
+
+- Manages multiple layers
+- Implements forward pass through all layers
+- Implements the training loop, including:
+
+    - Forward pass
+    - Loss calculation
+    - Backward pass (backpropagation)
+    - Updating of all weights and biases
+
 ```python
 import numpy as np
-
+import struct
+import os
 class Neuron:
     def __init__(self, num_inputs):
         self.weights = np.random.randn(num_inputs, 1) * 0.01
         self.bias = np.zeros((1, 1))
+        self.last_input = None
+        self.last_output = None
 
-    def relu(self, x):
-        return np.maximum(0, x)
-
-    def forward(self, inputs):
-        self.last_input = inputs
-        weighted_sum = np.dot(inputs, self.weights) + self.bias
-        self.last_output = self.relu(weighted_sum)
+    def relu(self, z):
+        return np.maximum(0, z)
+    
+    def relu_derivative(self, z):
+        return np.where(z > 0, 1, 0)
+    
+    def forward(self, activations):
+        self.last_input = activations
+        z = np.dot(activations, self.weights) + self.bias
+        self.last_output = self.relu(z)
         return self.last_output
+
+    def backward(self, dC_da, learning_rate):
+        da_dz = self.relu_derivative(self.last_output)
+        dC_dz = dC_da * da_dz
+        dC_dw = np.dot(self.last_input.T, dC_dz)
+        dC_db = np.sum(dC_dz, axis=0, keepdims=True)
+
+        self.weights -= learning_rate * dC_dw
+        self.bias -= learning_rate * dC_db
+
+        return np.dot(dC_dz, self.weights.T)
+
+
+    # output_gradient: 
+        # A positive gradient means we need to decrease that output
+        # A negative gradient means we need to increase that output
+
+    # learning_rate: how big of a step is taken while updating weights and biases
+
 
 class Layer:
     def __init__(self, num_neurons, num_inputs_per_neuron):
         self.neurons = [Neuron(num_inputs_per_neuron) for _ in range(num_neurons)]
 
-    def forward(self, inputs):
-        return np.array([neuron.forward(inputs) for neuron in self.neurons]).T
+    def forward(self, activations):
+        return np.hstack([neuron.forward(activations) for neuron in self.neurons])
+    
+    def backward(self, output_gradient, learning_rate):
+        return np.sum([neuron.backward(output_gradient[:, [i]], learning_rate) for i, neuron in enumerate(self.neurons)], axis=0)
 
 class NeuralNetwork:
     def __init__(self, layer_sizes):
@@ -180,19 +277,39 @@ class NeuralNetwork:
         for i in range(len(layer_sizes) - 1):
             self.layers.append(Layer(layer_sizes[i+1], layer_sizes[i]))
 
-    def forward(self, inputs):
+    def forward(self, activations):
         for layer in self.layers:
-            inputs = layer.forward(inputs)
-        return inputs
-
+            activations = layer.forward(activations)
+        return activations
+    
     def mse_loss(self, y, activations):    
         return np.mean((activations-y)**2)
+    
+    def derivative_mse_loss(self, y, activations):
+        return 2*(activations-y) / y.shape[0]
+    
+    def train(self, X, y, epochs, learning_rate, batch_size=32):
+        for epoch in range(epochs):
+            total_loss = 0
+            for i in range(0, len(X), batch_size):
+                X_batch = X[i:i+batch_size]
+                y_batch = y[i:i+batch_size]
+                
+                outputs = self.forward(X_batch)
+                loss = self.mse_loss(y_batch, outputs)
+                total_loss += loss * len(X_batch)
 
-    def train(self, X, y, learning_rate, epochs):
-        # Training code here (backpropagation)
-        pass
+                output_gradient = self.derivative_mse_loss(y_batch, outputs)
+                for layer in reversed(self.layers):
+                    output_gradient = layer.backward(output_gradient, learning_rate)
+
+            avg_loss = total_loss / len(X)
+            print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss}")
+
+    def predict(self, X):
+        return self.forward(X)
 ```
-To make it fully functional, you would need to implement the backpropagation algorithm in the `train` method.
+
 
 If you'd like a video format version, see the video below:
 
