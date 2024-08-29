@@ -1,4 +1,3 @@
-
 # Machine Learning from Scratch
 Implementations of ML, using only numpy.
 
@@ -157,7 +156,8 @@ w1*a1 + w2*a2 + ... + wn*an + bias
 ```
 - Changing the bias
 - Increasing a weight, in proportion to its activation (the larger the activation, the greater the change)
-- Changing all activations in previous layer, in proportion to its weights (the larger the weight, the greater the change) (but don't have direct influence over activations themselves, just weights and biases)
+- Changing all activations in previous layer, in proportion to its weights (the larger the weight, the greater the change) 
+  - but we don't have direct influence over activations themselves, just the weights and biases
 
 "Propagate backwards": backpropagation is applied in the direction from the last layer to the first layer.
 <br>------
