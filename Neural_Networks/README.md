@@ -1,12 +1,3 @@
-
-# Machine Learning from Scratch
-Implementations of ML, using only numpy.
-
-1. [Neural Networks](#neural-networks)
-2. [Transformer](#transformer)
-
-
-
 ## Neural Networks
 
 In the context of artificial neural networks:
