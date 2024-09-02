@@ -315,43 +315,167 @@ If you'd like a video format version, see the video below:
 
 [![Build Neural Networks from Scratch in 4 minutes](https://img.youtube.com/vi/oVVJbWgZySY/0.jpg)](https://www.youtube.com/watch?v=oVVJbWgZySY&t)
 
-# Transformer
+# Natural Language Processing
 
 ## Overview
+- study of understanding and synthesizing natural language [English, French] using computers.
+### Why is it challenging?
+- Ambiguity: Words can have multiple meanings
+- lexical ambiguity
+  - I went to the bank - financial or river bank is not clear
+- Syntactic ambiguity
+  - Call me a taxi, Please.
+    - Sure Taxi!
+    - Sure, I'll call the company right away
 
-###  Input
-A collection of real numbers, which could be:
-- A simple list, a 2D matrix, or even a higher-dimensional tensor
-- This collection is progressively transformed through multiple layers, with each layer being an array of real numbers. The transformation continues until the final output layer is reached
-    - Ex. in a text-processing model like GPT, the final layer generates a list of numbers representing the probability distribution of all possible next words that can be generated
 
-### Output:
-A probability distribution over all potential next tokens
 
-![Output Example](assets/4-outputEX.png)
+## Tokenization
+Machines don't understand text, they understand numbers. So, we need to convert text into numbers. First we need to tokenize the text. 
 
-## Tokens
+- Tokenization is the process of breaking down a corpus(large body of text) into tokens. 
+- text -> words, numbers and punctuation, which would be tokens.
+- graphemes -> playing - ['p', 'l', 'a', 'y', 'i', 'n', 'g']
+- phonemes -> playing - [''p', 'l', 'ey', 'i', 'ng']
+- morphemes -> playing - ['play', 'ing']
 
-Tokens are "little pieces" of information (ex. words, combinations of words, sounds, images)
+## Basic Proprocessing
 
-- Every token is associated with a vector (some list of numbers)
-  - encodes the meaning of that piece
-  - ex. in considering these vectors as coordinates, words with similar meanings tend to land near each other
+### Case Folding
+- Convert all text to upper or lowercase 
+- reduces the number of unique tokens i.e. size of vocabulary
+- downside - information loss
+- Green[Surname] and green[color] when lowercased, they are the same word
+- so Casefolding depends on application
+
+### Stop Words removal
+- Words that are too common to be useful
+- "a", "the", "and", "but", "or", "is"
+- `The party was Amazing! -> [Party,Amazing,!]`
+- improves efficiency but can cause information loss
+- eg. removing "not" changes the meaning entirely
+
+### Stemming
+- Reducing words to their root form
+- "playing", "played" -> "play"
+- can create invalid words
+- eg. "studies" -> "studi"
+- rarely used and Lemmetization is preferred
+
+### Lemmetization
+- Reducing words to "lemma" - dictionary form
+- "did", "done", "doing" -> "do"
+- takes into account nouns, verbs and adjectives
+- it will treat "energetic" and "energy" differntly
+- more accurate and robust than stquemming
+- BUT removes the ability to understand tenses
+
+## Advanced Preprocessing
+### Part of Speech Tagging (POS)
+- Assigning a part of speech to each word i.e. noun, verb, adjective, etc.
+- better to understand **intent of action** for ambiguous words
+- `"Hand me the book" -> Hand[Verb]`
+- `"Book is in my hand" -> Book[Noun]`
+
+### Named Entity Recognition (NER)
+- Identifying and classifying named entities in text
+- persons, countries, organizations, locations, dates, etc.
+- Helpful in ambiguity resolution
+- `Amazon -> are you talking about Amazon the company or Amazon the river?`
+
+## Vectorization
+- Decomposed text into smaller tokens but still text which computers can't understand
+- Need to convert text into numbers
+- Tokenization and PreProcessing gives variable length vectors
+- ML algorithms expect fixed length vectors
+
+### Bag of Words (BoW)
+- BoW counts the number of times a word appears in a document
+- Called **bag** - ignores word order
+  - Binary BoW - 1 if word appears, 0 if not
+- This fixed length vectors can be plotted in multi-dimensional vector space
+- useful because it now allows us to measure the distances between these points among other things, metrics like cosine similarity
+- Drawbacks
+  - No way to handle out of vocabulary words
+  - Sparse matrices
+  - Can't capture similarity between synonyms
+  - No word order so word relationship is gone.so `Man eats Pizza` and `Pizza eats Man` are the same
+
+### N-grams
+- chunks of n-tokens `bigrams` and `trigrams`....
+- helps capture some context
+- significantly increases vocabulary size
+- tradeofff between vocabulary size and model complexity
+
+>Remember - All words are not equal
+
+### Relative Frequency (RF)
+- Relative frequency is the number of times a word appears in a document than in all the documents
+- Relative Frequency = 
+
+$$
+\frac{\text{Frequency in Document}}{\text{Frequency in Corpus}}
+$$
+
+- highly frequently in some documents and rarely in the rest -> **meaningful to those documents**
+- words that appears roughly uniformly across all documents are **unlikely to be important**
+
+### Term Frequency (TF)
+- TF is the number of times a word appears in a document
+
+$$
+\text{tf}(t, d) = f_{t,d}
+$$
+
+- BUT some documenst are longer than others, standard practice for log transformation to **reduce bias**
+
+$$
+\text{tf}(t, d) = \log(1 + f_{t,d})
+$$
+
+### Inverse Document Frequency (IDF)
+- emphasise the more **important words** in each document.
+- Given term(t) in document(d)
+
+$$
+\text{idf}(t, D) = \log\left(\frac{N}{n_t}\right)
+$$
+
+- N - is the number of documents 
+ 
+- $n_t$- is the number of documents that contains t
+
+- $n_t$ decreases the idf increases corresponding to a token that is more likely to be important.
+
+### TF-IDF Score
+
+$$
+w_{t,d} = \text{tf}(t, d) \times \text{idf}(t, D)
+$$
+
+- **more frequently** a word appears in a **given document** and the **fewer** times it appears in **other** documents the **higher its TF-IDF score.**
 
 ![Tokens](assets/2-tokens.png)
 ![Token Vectors](assets/3-tokenvectors.png)
 ![Coordinate Tokens](assets/1-coordinateTokens.png)
 
+
 ## Embeddings
+- BoW or TF-IDF vectorization did not capture meaning of words.
+- Embedding is simply a representation of an object (e.g. a word, movie, graph, etc) as a vector of real numbers. It embeds an object into a high-dimensional vector space.
+- Say we have a collection of Video Games, the game can have attributes like `[<fantasy>, <strategy>, <multiplayer>, <action>, <adventure>]`
+- So Minecraft can be represented as `[0.1, 0.6, 0.4, 0.5, 0.9]`
+- Now when plotted in multidimensional space, similar games will be close to each other
+- How do we get these embeddings? - We have special Neural Network Architectures aka Models like **Word2Vec** and **GloVe**.
 
 Words that are used and occur in the same context tend to purport similar meanings (distributional semantics)
 
 - Break up the input into little chunks, then into vectors. These chunks are called tokens
-- The model has predefined vocabulary (list of all possible words)
+- The model has a predefined vocabulary (list of all possible words)
 - Embedding matrix (W_E): single column for each word
 - The dimensions of the embedding space can be very high (ex. 12,288)
-- theoretically, E(man) - E(woman) ~= E(king) - E(queen)
-- the dot product of two vectors, is a measure of how well they align. In this case, this acts as a measure of similarity between words
+- Theoretically, E(man) - E(woman) ~= E(king) - E(queen)
+- The dot product of two vectors is a measure of how well they align. In this case, this acts as a measure of similarity between words
 
 See `Transformer/embedding_notes.ipynb` for more on embeddings!
 
