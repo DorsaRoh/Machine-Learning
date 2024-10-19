@@ -3,6 +3,7 @@ Implementations of ML, using only numpy.
 
 1. [Neural Networks](#neural-networks)
 2. [Transformer](#transformer)
+3. [Reinforcement Learning](#reinforcement-learning)
 
 
 
@@ -558,3 +559,32 @@ b. Final linear transformation
 The final linear transformation, done using a weight matrix, mixes the information from the different heads back into a single vector of the original embedding_dim. This step is crucial because it allows the model to create a unified representation that integrates the different perspectives learned by each head
 
 *Credit to 3blue1brown for the visuals!*
+
+
+
+# Reinforcement Learning
+
+Intuitively, reinforcement learning (RL) is a framework for learning how to interact with the environment from experience. Inspired by biology, RL mirrors what is frequently observed in nature: how animals are driven by intrinsic rewards and feedback, as they learn how to interact with their environments.
+
+An overarching goal of the area of RL is to enable agentic AI to learn the same way humans and animals do.
+
+Consider simply the name "Reinforcement Learning". In human and animal systems, good behaviour is **reinforced** with rewards. This positive reinforcement encourages the systems to repeat this behaviour, and avoid negative reinforcement.
+
+--
+Suppose we have an agent, with agency to interact with semblence of its own will, in an environment. 
+Let the word `state` define the agent's knowledge of its surroundings. 
+The agent can make decisions for which `actions` to take, to interact with its environment and ultimately get a word.
+
+The big challenge in RL is to design a `policy` of what actions to take, given a state S, to maximize chance of getting a future reward. That's all the agent can do. Decide on a policy.
+
+
+
+Policy: `(s,a) = Pr(a = a | s = s)`
+i.e. given a state (s) and an action (a), what is the probability of taking action a given that I'm currently in state s?
+
+
+
+
+
+High quality resources:
+- https://www.youtube.com/watch?v=0MNVhXEX9to&list=PLMrJAkhIeNNQe1JXNvaFvURxGY4gE9k74&ab_channel=SteveBrunton
