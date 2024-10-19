@@ -563,19 +563,31 @@ The final linear transformation, done using a weight matrix, mixes the informati
 
 
 # Reinforcement Learning
+Put simply, reinforcement learning (RL) is the study of agents and how they learn through trial and error.
 
-Intuitively, reinforcement learning (RL) is a framework for learning how to interact with the environment from experience. Inspired by biology, RL mirrors what is frequently observed in nature: how animals are driven by intrinsic rewards and feedback, as they learn how to interact with their environments.
+Intuitively, RL is a framework for learning how to interact with the environment from experience. Inspired by biology, RL mirrors what is frequently observed in nature: how animals are driven by intrinsic rewards and feedback, as they learn how to interact with their environments.
 
 An overarching goal of the area of RL is to enable agentic AI to learn the same way humans and animals do.
 
-Consider simply the name "Reinforcement Learning". In human and animal systems, good behaviour is **reinforced** with rewards. This positive reinforcement encourages the systems to repeat this behaviour, and avoid negative reinforcement.
+Consider simply the name "Reinforcement Learning". In human and animal systems, good behaviour is **reinforced** with rewards. This positive reinforcement encourages the systems to repeat this behaviour, and avoid behaviour that results in negative reinforcement.
 
 --
 Suppose we have an agent, with agency to interact with semblence of its own will, in an environment. 
 Let the word `state` define the agent's knowledge of its surroundings. 
-The agent can make decisions for which `actions` to take, to interact with its environment and ultimately get a word.
+The agent can make decisions for which `actions` to take, to interact with its environment and ultimately get a reward.
 
 The big challenge in RL is to design a `policy` of what actions to take, given a state S, to maximize chance of getting a future reward. That's all the agent can do. Decide on a policy.
+
+Important Terminology:
+TODO: fix these links
+- [states & observations](###states-&-observations)
+- [policies](###policies)
+
+### States & Observations
+- **State** *s*: a complete description of the state world. 
+    - **Observation** *o*: partial description of a state, which may omit information.
+
+The agent typically does not have access to the state, only the observation
 
 
 
@@ -583,8 +595,13 @@ Policy: `(s,a) = Pr(a = a | s = s)`
 i.e. given a state (s) and an action (a), what is the probability of taking action a given that I'm currently in state s?
 
 
+### Policies
+
+A policy is a rule used by an agent to decide what actions to take. In essence, it is the agent's "brain". 
+
 
 
 
 High quality resources:
+- https://spinningup.openai.com/en/latest/spinningup/rl_intro.html
 - https://www.youtube.com/watch?v=0MNVhXEX9to&list=PLMrJAkhIeNNQe1JXNvaFvURxGY4gE9k74&ab_channel=SteveBrunton
