@@ -5,7 +5,6 @@
 
 1.  [Vectors](#1-vectors)
 2.  [Matrices](#2-matrices)
-
 10. [Probability](#10-probability)
 
 
