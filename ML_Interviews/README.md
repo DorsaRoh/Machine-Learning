@@ -1,19 +1,20 @@
 # ML Interview Questions & Answers
 
-*Questions are from [Introduction to ML Interviews Book](https://huyenchip.com/ml-interviews-book/) by Chip Huyen.*
+*Answers to the questions from [Introduction to ML Interviews Book](https://huyenchip.com/ml-interviews-book/) by Chip Huyen.*
 
 
-1. [Vectors](#11-vectors)
+1.  [Vectors](#1-vectors)
+2.  [Matrices](#2-matrices)
 
 
-## 1.1 Vectors
+## 1. Vectors
 
 ### Important terminology
 - **Span**: 
 **All possible vectors** that can be made by combining the original vectors
   - ex. *span{[1,0] , [0,1]}* can create ANY *2D* vector by combining these
 
-  **Span{v₁, v₂, …, vₙ} = {c₁v₁ + c₂v₂ + … + cₙvₙ | cᵢ ∈ ℝ}**
+  **Span{v₁, v₂, …, vₙ} = {a₁v₁ + b₂v₂ + … + cₙvₙ | a,b, ..., c ∈ ℝ}**
 
 
 - **Subspace**: A **subset** of a vector space that still keeps the properties of the vector space. In other words,
@@ -25,6 +26,14 @@
   - ex. let *v1 = [1, 0], v2 = [0, 1], v3 = [1, 1]*
     - v1 and v2 are linearly independent. <br>
     v3 is linearly *dependent* because it can be expressed as *v3 = 1 * v1 + 1 * v2*
+  - If you removed linearly independent vectors from a set, the span of the set WILL change
+
+- **Linearly dependent**: Vectors that can be expressed as the linear combination of other vectors in its set
+  - If you removed linearly dependent vectors from a set, the span of the set would NOT change
+
+- **Basis**:
+  - A set of **linearly independent** vectors that **span** the full space
+  - Think of it like a coordinate system; you need just enough vectors to reach any point. No extra/redundant ones (i.e. linearly dependent vectors)
 
 - **Rank**: the number of linearly independent vectors in a matrix
   - ex. Take matrix A below
@@ -37,6 +46,8 @@
 
     Here, columns 1 and 2 are independent (can't make one from the other. Column 3 is Column 1 + Column 2. <br>
   Therefore, rank(A) = 2
+
+- **Basis**: Unit vectors (î, ĵ, ... ) of the coordinate system
 
 ### 1. **Dot Product**
 
@@ -95,12 +106,6 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
   - Given given vectors 'v' and 'w', they are linearly independent if and only if the equation `av + bw = 0` has only the trivial solution `a = b = 0`
 
 **iv. [M] Given two sets of vectors `A = {a1, a2, a3, ..., an}` and `B = {b1, b2, b3, ..., bm}`, how do you check that they share the same basis?**
-
-- A basis is a set of vectors that are:
-  - Linearly independent (i.e. no vector can be made from combinations of the others)
-  - Can generate/create all vectors in the space (span)
-  - Think of it like a coordinate system; you need just enough vectors to reach any point, but no extra/redundant ones (i.e. linearly dependent vectors)
-
 
 **v. [M] Given `n` vectors, each of `d` dimensions, what is the dimension of their span?**
 
@@ -190,3 +195,54 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 
 - **Metric to Norm**: Not always possible. Only metrics compatible with vector space operations (like translation and scaling) can be derived from a norm
   - From the intuitive example above: Just because we know how far apart restaurants are (metric), we can't always figure out how far each is from downtown (norm)!
+
+
+
+## 2. Matrices
+
+**1. [E] Why do we say that matrices are linear transformations?**
+
+**2. [E] What’s the inverse of a matrix? Do all matrices have an inverse? Is the inverse of a matrix always unique?**
+
+**3. [E] What does the determinant of a matrix represent?**
+
+**4. [E] What happens to the determinant of a matrix if we multiply one of its rows by a scalar t × R?**
+
+**5. [M] A 4 × 4 matrix has four eigenvalues 3, 3, 2, -1. What can we say about the trace and the determinant of this matrix?**
+
+**6. [M] Given the following matrix:**
+
+  |    |    |    |
+  |----|----|----|
+  | 1  |  4 | -2 |
+  | -1 |  3 |  2 |
+  | 3  |  5 | -6 |
+
+**Without explicitly using the equation for calculating determinants, what can we say about this matrix’s determinant?**
+
+**Hint: rely on a property of this matrix to determine its determinant.**
+
+**7. [M] What’s the difference between the covariance matrix `AᵀA` (A transpose multiplied by A) and the Gram matrix `AAᵀ` (A multiplied by A transpose)?**
+
+**8. Given a matrix `A` (dimensions `n × m`) and a vector `b` (dimensions `n × 1`):**
+
+**i. [M] Find `x` such that `Ax = b` (solve the linear equation)**  
+
+**ii. [E] When does this have a unique solution?**
+  
+**iii. [M] Why is it when `A` has more columns than rows, `Ax = b` has multiple solutions?**
+  
+**iv. [M] Given a matrix `A` with no inverse, how would you solve the equation `Ax = b`? What is the pseudoinverse, and how do you calculate it?**
+    
+
+**9. Derivative is the backbone of gradient descent**.
+
+**i. [E] What does the derivative represent?**
+
+**ii. [M] What’s the difference between the derivative, gradient, and Jacobian?**
+    
+**10. [H] Say we have the weights `w` (dimensions `d × m`) and a mini-batch `x` of `n` elements, each element having shape `1 × d`, so `x` is of size `n × d`. We have the output `y = f(x; w) = xw`. What is the dimension of the Jacobian `∂y/∂x`?**
+    
+**11. [H] Given a very large symmetric matrix `A` that doesn’t fit in memory (say `A ∈ R^{1M × 1M}`) and a function `f` that can quickly compute `f(x) = Ax` for `x ∈ R^{1M}`, find the unit vector `x` such that `xᵀAx` is minimal.**
+
+**Hint: Can you frame it as an optimization problem and use gradient descent to find an approximate solution?**
