@@ -12,7 +12,7 @@ A collection of real numbers, which could be:
 ### Output:
 A probability distribution over all potential next tokens
 
-![Output Example](../assets/4-outputEX.png)
+![Output Example](../assets/Transformers/4-outputEX.png)
 
 ## Tokens
 
@@ -22,9 +22,9 @@ Tokens are "little pieces" of information (ex. words, combinations of words, sou
   - encodes the meaning of that piece
   - ex. in considering these vectors as coordinates, words with similar meanings tend to land near each other
 
-![Tokens](../assets/2-tokens.png)
-![Token Vectors](../assets/3-tokenvectors.png)
-![Coordinate Tokens](../assets/1-coordinateTokens.png)
+![Tokens](../assets/Transformers/2-tokens.png)
+![Token Vectors](../assets/Transformers/3-tokenvectors.png)
+![Coordinate Tokens](../assets/Transformers/1-coordinateTokens.png)
 
 ## Embeddings
 
@@ -42,7 +42,7 @@ See `embedding_notes.ipynb` for more on embeddings!
 Below is an image of the embedding matrix. Each word corresponds to a specific vector, with no reference to its context.
 It is the Attention block's responsibility to update a word's vector with its context. (to be discussed later)
 
-![Embedding Matrix](../assets/10-embeddingmatrix.png)
+![Embedding Matrix](../assets/Transformers/10-embeddingmatrix.png)
 
 ## Positional Encoders
 
@@ -82,8 +82,8 @@ print(np.exp(seq)/np.sum(np.exp(seq)))
 # [0.03511903 0.25949646 0.70538451]
 ```
 
-![Softmax Equation](../assets/8-softmaxEqn.png)
-![Softmax](../assets/6-softmax.png)
+![Softmax Equation](../assets/Transformers/8-softmaxEqn.png)
+![Softmax](../assets/Transformers/6-softmax.png)
 
 ## Temperature
 
@@ -92,8 +92,8 @@ With softmax, the constant T added to the denominator of the exponents of e in t
 - Makes the softmax outputs LESS extreme towards 0 and 1
 - This enables more unique text to be generated and different for each generation
 
-![Softmax with Temperature](../assets/7-softmaxT.png)
-![Logits](../assets/9-logits.png)
+![Softmax with Temperature](../assets/Transformers/7-softmaxT.png)
+![Logits](../assets/Transformers/9-logits.png)
 
 ## Attention
 
@@ -111,13 +111,13 @@ Updates a word's embedding vector in reference to its context. Enables the trans
 
 Prior to Attention, the embedding vector of each word is consistent, regardless of its context (embedding matrix). Therefore, the motivation of Attention is to update a word's embedding vector depending on its context (i.e. surrounding tokens) to capture this specific contextual instance of the word
 
-![Attention](../assets/10-embeddingmatrix.png)
+![Attention](../assets/Transformers/10-embeddingmatrix.png)
 
 The computation to predict the next token relies entirely on the final vector of the current sequence
 
 Initially, this vector corresponds to the embedding of the last word in the sequence. As the sequence passes through the model's attention blocks, the final vector is updated to include information from the entire sequence, not just the last word. This updated vector becomes a summary of the whole sequence, encoding all the important information needed to predict the next word
 
-![Attention Last Vector](../assets/12-attentionlastvector.png)
+![Attention Last Vector](../assets/Transformers/12-attentionlastvector.png)
 
 ### Single-Head Attention
 
@@ -125,7 +125,7 @@ Goal: series of computations to produce a new refined set of embeddings
 
 ex. Have nouns ingest the meanings of their corresponding adjectives
 
-![Attention Embeddings](../assets/13-attentionEmbeds.png)
+![Attention Embeddings](../assets/Transformers/13-attentionEmbeds.png)
 
 #### Query
 
@@ -165,35 +165,35 @@ Steps:
 6. Use attention scores to weight the Value vectors
 7. Output step 6.
 
-![Query W1](../assets/14-queryW1.png)
-![Query Key 1](../assets/15-queryKey1.png)
-![Query Key 2](../assets/16-queryKey2.png)
+![Query W1](../assets/Transformers/14-queryW1.png)
+![Query Key 1](../assets/Transformers/15-queryKey1.png)
+![Query Key 2](../assets/Transformers/16-queryKey2.png)
 
 The higher the dot product, the more relevant the Query to the Key (i.e. word to another word in the sentence)
 
-![QK Matrix 1](../assets/17-qKmatrix1.png)
-![QK Matrix 2](../assets/18-qKmatrix2.png)
-![QK Matrix 3](../assets/19-qKmatrix3.png)
-![QK Matrix 4](../assets/20-qKmatrix4.png)
+![QK Matrix 1](../assets/Transformers/17-qKmatrix1.png)
+![QK Matrix 2](../assets/Transformers/18-qKmatrix2.png)
+![QK Matrix 3](../assets/Transformers/19-qKmatrix3.png)
+![QK Matrix 4](../assets/Transformers/20-qKmatrix4.png)
 
 ### Masking
 
 Masking is to prevent later tokens influencing earlier ones during the training process. This is done by setting the entries of the older tokens to -infinity. So when softmax is applied, they are turned to 0.
 
-![Masking](../assets/23-masking.png)
+![Masking](../assets/Transformers/23-masking.png)
 
 Why mask?
 - During the train process, every possible subsequence is trained/predicted on for efficiency.
 - One training example, effectively acts as many.
 - This means we never want to allow later words to influence earlier words (because they essentially "give away" the answer for what comes next/the answer to the predictions)
 
-![Subsequence Training](../assets/21-subsequenceTraining.png)
+![Subsequence Training](../assets/Transformers/21-subsequenceTraining.png)
 
 ### Softmax
 
 After masking, softmax (normalization) is applied. Masking was done to ensure that later tokens do not affect earlier tokens in the training process. So, the older tokens' entries are set to -infinity during the masking phase, to be transformed into 0 with softmax.
 
-![Masking and Softmax](../assets/22-maskingANDsoftmax.png)
+![Masking and Softmax](../assets/Transformers/22-maskingANDsoftmax.png)
 
 ### Value
 
@@ -207,11 +207,11 @@ Value: vector that holds the actual info that will be passed along the next laye
 - continuing with the sentence "The cat sat on the mat", if "sat" (Key) is deemed important for "cat" (Query), the Value associated with "sat" will contribute significantly to the final representation of "cat"
 - this helps the model understand that "cat" is related to the action of "sitting"
 
-![Value Matrix](../assets/24-valueMatrix.png)
-![Value Embedding 1](../assets/25-valueEmbedding1.png)
-![Value Embedding 2](../assets/26-valueEmbedding2.png)
-![Value Embedding 3](../assets/27-valueEmbedding3.png)
-![Value Embedding 4](../assets/28-valueEmbedding4.png)
+![Value Matrix](../assets/Transformers/24-valueMatrix.png)
+![Value Embedding 1](../assets/Transformers/25-valueEmbedding1.png)
+![Value Embedding 2](../assets/Transformers/26-valueEmbedding2.png)
+![Value Embedding 3](../assets/Transformers/27-valueEmbedding3.png)
+![Value Embedding 4](../assets/Transformers/28-valueEmbedding4.png)
 
 ## Multi-Head Attention
 

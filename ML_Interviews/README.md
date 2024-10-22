@@ -6,6 +6,9 @@
 1.  [Vectors](#1-vectors)
 2.  [Matrices](#2-matrices)
 
+10. [Probability](#10-probability)
+
+
 
 ## 1. Vectors
 
@@ -200,6 +203,21 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 
 ## 2. Matrices
 
+### Important terminology
+- **Determinant**: A scalar that represents the factor by which a linear transformation scales area (in 2D) or volumes (in 3D) in the corresponding space.
+
+  The determinant of matrix A below:
+    |    |    |
+    |----|----|   
+    | a |  b |
+    | c |  d |
+
+  
+  = ad - bc
+
+  - det(𝑀1 𝑀2) = det(𝑀1)det(𝑀2)
+    - Applying the linear transformations 𝑀2 and 𝑀1 sequentially scales the area/volume by the product of their individual scaling factors (determinants), which is equivalent to the scalar botained by first applying the combined transformation 𝑀1𝑀2 (transformation 𝑀2 is applied first, followed by 𝑀1) and then determining how it scales the area/volume
+
 **1. [E] Why do we say that matrices are linear transformations?**
 
 **2. [E] What’s the inverse of a matrix? Do all matrices have an inverse? Is the inverse of a matrix always unique?**
@@ -246,3 +264,33 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 **11. [H] Given a very large symmetric matrix `A` that doesn’t fit in memory (say `A ∈ R^{1M × 1M}`) and a function `f` that can quickly compute `f(x) = Ax` for `x ∈ R^{1M}`, find the unit vector `x` such that `xᵀAx` is minimal.**
 
 **Hint: Can you frame it as an optimization problem and use gradient descent to find an approximate solution?**
+
+# 10. Probability
+
+### Important Terminology
+
+- **Mean** μ: 
+
+  The mean of a distribution is the center of mass for that distribution. 
+  <br>Ie. what you would expect the **average outcome** to be if you repeated an experiment many times<br>
+    E(X)=∑xP(x)<br>
+
+- **Standard deviation** σ:
+
+  Measures how dispered the data is in relation to the mean.
+
+  <img src="../assets/ML_Interviews/1-standardd.png" alt="Standard" width="300" height="auto">
+
+<br>
+
+- **Common distributions**: 
+
+  **Explain all the common distributions and write out its equation, draw its probability mass function (PMF) if it’s discrete and the probability density function (PDF) if it’s continuous.**
+
+    1. Normal distribution
+    2. 
+
+
+- **Cross entropy**:
+- **KL divergence**:
+- **Probability distribution**:
