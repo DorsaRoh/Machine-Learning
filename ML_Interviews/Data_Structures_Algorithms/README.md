@@ -11,7 +11,7 @@
 `myStack = []`
 
 
-<img src="../assets/ML_Interviews/2-stack.png" alt="stack" width="300" height="auto">
+<img src="../../assets/ML_Interviews/DSA/2-stack.png" alt="stack" width="300" height="auto">
 
 
 | Operation | Big-O Time |

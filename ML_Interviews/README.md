@@ -73,8 +73,8 @@
 
 Outer product ⊗ combines two vectors to produce a matrix. 
 
-<img src="../assets/ML_Interviews/outerp1.png" alt="" width="500" height="auto">
-<img src="../assets/ML_Interviews/outerp2.png" alt="" width="500" height="auto">
+<img src="../assets/ML_Interviews/ML/outerp1.png" alt="" width="500" height="auto">
+<img src="../assets/ML_Interviews/ML/outerp2.png" alt="" width="500" height="auto">
 
 <br> 
 
@@ -279,7 +279,7 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 
   Measures how dispered the data is in relation to the mean.
 
-  <img src="../assets/ML_Interviews/1-standardd.png" alt="Standard" width="300" height="auto">
+  <img src="../assets/ML_Interviews/ML/1-standardd.png" alt="Standard" width="300" height="auto">
 
 <br>
 
