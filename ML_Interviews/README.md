@@ -1,6 +1,8 @@
 # ML Interview Questions & Answers
 
-*Answers to the questions from [Introduction to ML Interviews Book](https://huyenchip.com/ml-interviews-book/) by Chip Huyen.*
+Linear Algebra, Statistics & Probability from scratch.
+
+*Includes all answers to the questions from [Introduction to ML Interviews Book](https://huyenchip.com/ml-interviews-book/) by Chip Huyen.*
 
 
 1.  [Vectors](#1-vectors)
@@ -37,7 +39,7 @@
   - A set of **linearly independent** vectors that **span** the full space
   - Think of it like a coordinate system; you need just enough vectors to reach any point. No extra/redundant ones (i.e. linearly dependent vectors)
 
-- **Rank**: the number of linearly independent vectors in a matrix
+- **Rank**: the number of linearly independent vectors in a matrix. <br> Ie. **Rank = dimension of span**, 
   - ex. Take matrix A below
 
     |    |    |   |
@@ -203,19 +205,78 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 ## 2. Matrices
 
 ### Important terminology
+
+- **Ax = v** 
+  <br> *where A is a matrix, x & v are vectors*
+  <br> Matrix A represents a linear transformation, of which vector x turns into vector v.
+
+- **Identity Matrix**: the transformation that does **nothing**. <br> Leaves î, ĵ unmoved.
+  <br><br> ex. the identity matrix in 2D:
+    |    |    |
+    |----|----|   
+    | 1 |  0 |
+    | 0 |  1 |
+
+
+
 - **Determinant**: A scalar that represents the factor by which a linear transformation scales area (in 2D) or volumes (in 3D) in the corresponding space.
 
-  The determinant of matrix A below:
+  - The determinant is only defined for **square** matrices (n x n matrices)
+    - ex. a 2x2 matrix scales area in a 2D plane, a 3x3 matrix scales volume in 3D space
+
+  - The determinant of matrix A below:
     |    |    |
     |----|----|   
     | a |  b |
     | c |  d |
 
   
-  = ad - bc
+    = ad - bc
+
+
 
   - det(𝑀1 𝑀2) = det(𝑀1)det(𝑀2)
     - Applying the linear transformations 𝑀2 and 𝑀1 sequentially scales the area/volume by the product of their individual scaling factors (determinants), which is equivalent to the scalar botained by first applying the combined transformation 𝑀1𝑀2 (transformation 𝑀2 is applied first, followed by 𝑀1) and then determining how it scales the area/volume
+<br><br>
+
+- **Inverse A⁻¹** : The **reverse** transformation of matrix A. <br>
+
+  - if det(A) != 0:
+    - Can solve a system of linear equations/matrix with 
+    <br>`(A)(A⁻¹)x = (v)(A⁻¹)`
+    <br>`x = (v)(A⁻¹)`
+    <br>ie. playing the transformation matrix A in reverse and following vector v
+
+    - `(A⁻¹)(A) = identity matrix`
+
+    - ex. 
+      - if A is a clockwise rotation of 90 degrees, A⁻¹ is a counterclockwise rotation of 90 degrees.
+      - if A is a rightward shear that pushes ĵ one unit to the right, A⁻¹ is a leftward shear that pushes ĵ one unit to the left.
+
+  - if det(A) = 0:
+    - There is no inverse. 
+    <br> Cannot "undo" the transformation of a higher dimension into a lower dimension. 
+      - ex. plane → line, 3D space → plane, 3D → line, 3D → point, etc
+    
+
+- **Column space/Range/Image**: Set of all possible **outputs** Av
+  <br>Columns of matrix tell you where basis vectors î, ĵ land (in the transformed space after transformation A) 
+  
+    <img src="../assets/ML_Interviews/ML/2-colspace.png" alt="Standard" width="800" height="auto">
+
+  <img src="../assets/ML_Interviews/ML/22-pivotcol.png" alt="Standard" width="800" height="auto">
+
+  <img src="../assets/ML_Interviews/ML/23-pivotcol.png" alt="Standard" width="800" height="auto">
+
+  <img src="../assets/ML_Interviews/ML/23-pivotcols.png" alt="Standard" width="800" height="auto">
+
+   <img src="../assets/ML_Interviews/ML/23-pivotcol3.png" alt="Standard" width="800" height="auto">
+
+- **Kernel/null space**: Span of all volumns of matrix A
+<br> Ie. set of all linear combinations of the columns of A
+
+Therefo
+
 
 **1. [E] Why do we say that matrices are linear transformations?**
 
