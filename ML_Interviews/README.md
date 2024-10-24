@@ -63,11 +63,11 @@ Linear Algebra, Statistics & Probability from scratch.
   <br> λ is a scalar (**eigenvalue**) associated with v 
     - Ie. the **stretch/compression/scale** of v by A
 
-  
-<img src="../assets/ML_Interviews/ML/3-eigen.png" alt="" width="500" height="auto">
+<br>
+<br>
 
-[![Watch the video](https://raw.githubusercontent.com/DorsaRoh/Machine-Learning/main/asserts/ML_Interviews/ML/eigen.mp4)](https://raw.githubusercontent.com/DorsaRoh/Machine-Learning/main/asserts/ML_Interviews/ML/eigen.mp4)
-
+*Click the image for a 3Blue1Brown visualization of eigenvectors and eigenvalues*
+[![Watch the clip](https://img.youtube.com/vi/6TPb40eIh-Q/0.jpg)](https://youtu.be/6TPb40eIh-Q)
 
 
 ### 1. **Dot Product**
