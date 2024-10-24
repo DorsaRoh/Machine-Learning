@@ -51,7 +51,24 @@ Linear Algebra, Statistics & Probability from scratch.
     Here, columns 1 and 2 are independent (can't make one from the other. Column 3 is Column 1 + Column 2. <br>
   Therefore, rank(A) = 2
 
-- **Basis**: Unit vectors (î, ĵ, ... ) of the coordinate system
+- **Basis**: Unit vectors (î, ĵ, ... ) of the coordinate system 
+
+- **Eigenvectors & eigenvalues**:
+
+  Eigenvectors are vectors with **UNCHANGED direction** when a linear transformation is applied.
+
+  **Av=λv**
+  <br>where A is the matrix, 
+  <br> v is the eigenvector, 
+  <br> λ is a scalar (**eigenvalue**) associated with v 
+    - Ie. the **stretch/compression/scale** of v by A
+
+  
+<img src="../assets/ML_Interviews/ML/3-eigen.png" alt="" width="500" height="auto">
+
+[![Watch the video](https://raw.githubusercontent.com/DorsaRoh/Machine-Learning/main/asserts/ML_Interviews/ML/eigen.mp4)](https://raw.githubusercontent.com/DorsaRoh/Machine-Learning/main/asserts/ML_Interviews/ML/eigen.mp4)
+
+
 
 ### 1. **Dot Product**
 
@@ -59,12 +76,27 @@ Linear Algebra, Statistics & Probability from scratch.
 
 - The dot product represents the magnitude of one vector projected onto another, capturing the "shadow"/component of one vector in the direction of the other
 - Mathematically, if `a` is the angle between vectors `A` and `B`, the dot product is given by:
-  `A · B = |A| |B| cos(a)`
+  `A · B = |A||B|cos(a)`
   where `|A|` and `|B|` are the magnitudes of vectors `A` and `B`, respectively
+    - ex. [1,2] · [3, 4] = [(1)(3), (2)(4)] = [3, 8]
+
+- Given vectors A and B, A · B can be positive, negative, or 0:
+  - **A · B < 0**: vectors are in opposite general directions.
+    <br>**180 > cos(θ) > 90**
+    - ex. [1, 2] · [-1, -3] = -7
+
+  - **A · B = 0**: vectors are perpendicular (orthogonal).
+    <br>**cos(θ) = 90**
+    - ex. [1, 2] · [2, -1] = 0
+
+  - **A · B > 0**: vectors generally in same general direction.
+  <br>**cos(θ) < 90**
+    - [1, 2] · [2, 3] = 8
+
 
 **ii. [E] Given a vector `u`, find a vector `v` of unit length such that the dot product of `u` and `v` is maximized.**
 
-- The dot product is defined as `u · v = |u| |v| cos(θ)`, where `θ` is the angle between the vectors
+- The dot product is defined as `u·v = |u||v|cos(θ)`, where `θ` is the angle between the vectors
 - To maximize the dot product, `cos(θ)` should be maximized, which occurs when `θ = 0`. At this angle, `cos(0) = 1`
 - Therefore, the maximum dot product is achieved when `v` is in the same direction as `u`, and its magnitude is 1
     - Isolating for `v`,  `v` is given by: `v = u / |u|` where `|u|` is the magnitude of vector `u`
@@ -274,8 +306,6 @@ The outer product of 'weather' and 'crop' can capture all possible interactions 
 
 - **Kernel/null space**: Span of all volumns of matrix A
 <br> Ie. set of all linear combinations of the columns of A
-
-Therefo
 
 
 **1. [E] Why do we say that matrices are linear transformations?**
