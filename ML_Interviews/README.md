@@ -58,7 +58,7 @@ Linear Algebra, Statistics & Probability from scratch.
   Eigenvectors are vectors with **UNCHANGED direction** when a linear transformation is applied.
 
   **Av=λv**
-  <br>where A is the matrix, 
+  <br>where A is the transformation matrix, 
   <br> v is the eigenvector, 
   <br> λ is a scalar (**eigenvalue**) associated with v 
     - Ie. the **stretch/compression/scale** of v by A
