@@ -2,4 +2,4 @@
 .vector_cache
 __pycache__
 data/arxiv_abstracts
-/diffusion/data
+/Diffusion/data
