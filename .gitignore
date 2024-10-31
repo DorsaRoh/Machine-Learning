@@ -3,3 +3,4 @@
 __pycache__
 data/arxiv_abstracts
 /Diffusion/data
+Diffusion/pusht_cchi_v7_replay.zarr
