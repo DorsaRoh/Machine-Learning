@@ -1,231 +1,406 @@
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
-import torchvision
-from torchvision import transforms
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+import zarr
+import numpy as np
+from diffusers import UNet1DModel, DDPMScheduler
+from diffusers.optimization import get_scheduler
+from diffusers.training_utils import EMAModel
 import torch.nn.functional as F
-from torch.optim import Adam
-import math
+from tqdm.auto import tqdm
+from dataclasses import dataclass
+from typing import Tuple, Optional
+import os
+import gdown
+import collections
+from imageio import get_writer
 
-# Image transforms
-transform = transforms.Compose([
-    transforms.ToTensor(),                # Convert to tensor
-    transforms.Lambda(lambda t: (t * 2) - 1)  # Scale to [-1, 1]
-])
+# Data Configurations
+@dataclass
+class DataConfig:
+    """Configuration for dataset"""
+    # Dataset paths and download info
+    dataset_path: str = "pusht_cchi_v7_replay.zarr.zip"
+    dataset_gdrive_id: str = "1KY1InLurpMvJDRb14L9NlXT_fEsCvVUq&confirm=t"
+    
+    # Sequence parameters
+    pred_horizon: int = 16  # Number of steps to predict
+    obs_horizon: int = 2    # Number of observations to condition on
+    action_horizon: int = 8 # Number of actions to execute
+    
+    # Data dimensions
+    image_size: Tuple[int, int] = (96, 96)
+    image_channels: int = 3
+    action_dim: int = 2
+    state_dim: int = 5  # [agent_x, agent_y, block_x, block_y, block_angle]
 
-# Helper function to show tensor image
-def show_tensor_image(image):
-    if len(image.shape) == 4:
-        image = image[0, :, :, :]
-    image = (image + 1) / 2  # Scale back to [0, 1]
-    image = image.permute(1, 2, 0).clip(0, 1)
-    plt.imshow(image)
-    plt.axis('off')
+@dataclass
+class ModelConfig:
+    """Configuration for neural networks"""
+    # Observation encoding
+    obs_embed_dim: int = 256
+    
+    # UNet configuration
+    sample_size: int = 16  # pred_horizon length
+    in_channels: int = 2   # action dimension
+    out_channels: int = 2  # action dimension
+    layers_per_block: int = 2
+    block_out_channels: Tuple[int, ...] = (128,)
+    norm_num_groups: int = 8
+    down_block_types: Tuple[str, ...] = ("DownBlock1D",) * 1
+    up_block_types: Tuple[str, ...] = ("UpBlock1D",) * 1
+    
+    def __post_init__(self):
+        # For conditioning through input channels
+        self.total_in_channels = self.in_channels + self.obs_embed_dim //8 # actions + conditioning
 
-# Load CIFAR-10 dataset
-dataset = torchvision.datasets.CIFAR10(
-    root='Diffusion/data/', 
-    train=True,
-    download=True,
-    transform=transform
-)
-dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
 
-# Set image size based on CIFAR-10
-IMG_SIZE = 32
+"""
+Helper Functions
+"""
+def create_sample_indices(
+        episode_ends:np.ndarray, sequence_length:int,
+        pad_before: int=0, pad_after: int=0):
+    indices = list()
+    for i in range(len(episode_ends)):
+        start_idx = 0
+        if i > 0:
+            start_idx = episode_ends[i-1]
+        end_idx = episode_ends[i]
+        episode_length = end_idx - start_idx
 
-# Linear noise schedule
-def linear_beta_schedule(timesteps, start=0.0001, end=0.02):
-    return torch.linspace(start, end, timesteps)
+        min_start = -pad_before
+        max_start = episode_length - sequence_length + pad_after
 
-def get_index_from_list(vals, t, x_shape):
-    batch_size = t.shape[0]
-    out = vals.gather(-1, t.cpu())
-    return out.reshape(batch_size, *((1,) * (len(x_shape)-1))).to(t.device)
+        # range stops one idx before end
+        for idx in range(min_start, max_start+1):
+            buffer_start_idx = max(idx, 0) + start_idx
+            buffer_end_idx = min(idx+sequence_length, episode_length) + start_idx
+            start_offset = buffer_start_idx - (idx+start_idx)
+            end_offset = (idx+sequence_length+start_idx) - buffer_end_idx
+            sample_start_idx = 0 + start_offset
+            sample_end_idx = sequence_length - end_offset
+            indices.append([
+                buffer_start_idx, buffer_end_idx,
+                sample_start_idx, sample_end_idx])
+    indices = np.array(indices)
+    return indices
 
-# Forward diffusion process
-def forward_diffusion_sample(x_0, t, device="cpu"):
-    noise = torch.randn_like(x_0)
-    sqrt_alphas_cumprod_t = get_index_from_list(sqrt_alphas_cumprod, t, x_0.shape)
-    sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
-        sqrt_one_minus_alphas_cumprod, t, x_0.shape
-    )
-    return sqrt_alphas_cumprod_t.to(device) * x_0.to(device) \
-    + sqrt_one_minus_alphas_cumprod_t.to(device) * noise.to(device), noise.to(device)
+def sample_sequence(train_data, sequence_length,
+                    buffer_start_idx, buffer_end_idx,
+                    sample_start_idx, sample_end_idx):
+    result = dict()
+    for key, input_arr in train_data.items():
+        sample = input_arr[buffer_start_idx:buffer_end_idx]
+        data = sample
+        if (sample_start_idx > 0) or (sample_end_idx < sequence_length):
+            data = np.zeros(
+                shape=(sequence_length,) + input_arr.shape[1:],
+                dtype=input_arr.dtype)
+            if sample_start_idx > 0:
+                data[:sample_start_idx] = sample[0]
+            if sample_end_idx < sequence_length:
+                data[sample_end_idx:] = sample[-1]
+            data[sample_start_idx:sample_end_idx] = sample
+        result[key] = data
+    return result
 
-# Set up noise schedule
-T = 300
-betas = linear_beta_schedule(timesteps=T)
-alphas = 1. - betas
-alphas_cumprod = torch.cumprod(alphas, axis=0)
-alphas_cumprod_prev = F.pad(alphas_cumprod[:-1], (1, 0), value=1.0)
-sqrt_recip_alphas = torch.sqrt(1.0 / alphas)
-sqrt_alphas_cumprod = torch.sqrt(alphas_cumprod)
-sqrt_one_minus_alphas_cumprod = torch.sqrt(1. - alphas_cumprod)
-posterior_variance = betas * (1. - alphas_cumprod_prev) / (1. - alphas_cumprod)
+def get_data_stats(data):
+    data = data.reshape(-1,data.shape[-1])
+    stats = {
+        'min': np.min(data, axis=0),
+        'max': np.max(data, axis=0)
+    }
+    return stats
 
-class Block(nn.Module):
-    def __init__(self, in_ch, out_ch, time_emb_dim, up=False):
-        super().__init__()
-        self.time_mlp = nn.Linear(time_emb_dim, out_ch)
-        if up:
-            self.conv1 = nn.Conv2d(2*in_ch, out_ch, 3, padding=1)
-            self.transform = nn.ConvTranspose2d(out_ch, out_ch, 4, 2, 1)
-        else:
-            self.conv1 = nn.Conv2d(in_ch, out_ch, 3, padding=1)
-            self.transform = nn.Conv2d(out_ch, out_ch, 4, 2, 1)
-        self.conv2 = nn.Conv2d(out_ch, out_ch, 3, padding=1)
-        self.bnorm1 = nn.BatchNorm2d(out_ch)
-        self.bnorm2 = nn.BatchNorm2d(out_ch)
-        self.relu = nn.ReLU()
-        
-    def forward(self, x, t):
-        h = self.bnorm1(self.relu(self.conv1(x)))
-        time_emb = self.relu(self.time_mlp(t))
-        time_emb = time_emb[(..., ) + (None, ) * 2]
-        h = h + time_emb
-        h = self.bnorm2(self.relu(self.conv2(h)))
-        return self.transform(h)
+def normalize_data(data, stats):
+    # Normalize to [0,1]
+    ndata = (data - stats['min']) / (stats['max'] - stats['min'])
+    # Normalize to [-1, 1]
+    ndata = ndata * 2 - 1
+    return ndata
 
-class SinusoidalPositionEmbeddings(nn.Module):
-    def __init__(self, dim):
-        super().__init__()
-        self.dim = dim
+def unnormalize_data(ndata, stats):
+    ndata = (ndata + 1) / 2
+    data = ndata * (stats['max'] - stats['min']) + stats['min']
+    return data
 
-    def forward(self, time):
-        device = time.device
-        half_dim = self.dim // 2
-        embeddings = math.log(10000) / (half_dim - 1)
-        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
-        embeddings = time[:, None] * embeddings[None, :]
-        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
-        return embeddings
+# Dataset Class
+class PushTStateDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset_path, pred_horizon, obs_horizon, action_horizon):
+        # Read from zarr dataset
+        dataset_root = zarr.open(dataset_path, 'r')
+        # All demonstration episodes are concatenated in the first dimension N
+        train_data = {
+            # (N, action_dim)
+            'action': dataset_root['data']['action'][:],
+            # (N, obs_dim)
+            'obs': dataset_root['data']['state'][:]
+        }
+        # Marks one-past the last index for each episode
+        episode_ends = dataset_root['meta']['episode_ends'][:]
 
-class SimpleUnet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        image_channels = 3
-        down_channels = (64, 128, 256, 512, 1024)
-        up_channels = (1024, 512, 256, 128, 64)
-        out_dim = 3
-        time_emb_dim = 32
+        # Compute start and end of each state-action sequence
+        # Also handles padding
+        indices = create_sample_indices(
+            episode_ends=episode_ends,
+            sequence_length=pred_horizon,
+            # Add padding such that each timestep in the dataset are seen
+            pad_before=obs_horizon-1,
+            pad_after=action_horizon-1)
 
-        self.time_mlp = nn.Sequential(
-            SinusoidalPositionEmbeddings(time_emb_dim),
-            nn.Linear(time_emb_dim, time_emb_dim),
-            nn.ReLU()
+        # Compute statistics and normalize data to [-1,1]
+        stats = dict()
+        normalized_train_data = dict()
+        for key, data in train_data.items():
+            stats[key] = get_data_stats(data)
+            normalized_train_data[key] = normalize_data(data, stats[key])
+
+        self.indices = indices
+        self.stats = stats
+        self.normalized_train_data = normalized_train_data
+        self.pred_horizon = pred_horizon
+        self.action_horizon = action_horizon
+        self.obs_horizon = obs_horizon
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        # Get the start/end indices for this datapoint
+        buffer_start_idx, buffer_end_idx, \
+            sample_start_idx, sample_end_idx = self.indices[idx]
+
+        # Get normalized data using these indices
+        nsample = sample_sequence(
+            train_data=self.normalized_train_data,
+            sequence_length=self.pred_horizon,
+            buffer_start_idx=buffer_start_idx,
+            buffer_end_idx=buffer_end_idx,
+            sample_start_idx=sample_start_idx,
+            sample_end_idx=sample_end_idx
         )
 
-        self.conv0 = nn.Conv2d(image_channels, down_channels[0], 3, padding=1)
+        # Discard unused observations
+        nsample['obs'] = nsample['obs'][:self.obs_horizon,:]
+        return nsample
 
-        self.downs = nn.ModuleList([
-            Block(down_channels[i], down_channels[i+1], time_emb_dim)
-            for i in range(len(down_channels)-1)
-        ])
-        
-        self.ups = nn.ModuleList([
-            Block(up_channels[i], up_channels[i+1], time_emb_dim, up=True)
-            for i in range(len(up_channels)-1)
-        ])
+# Model Classes
+class ObservationEncoder(nn.Module):
+    """Encodes observations for conditioning"""
+    def __init__(self, obs_dim: int, embed_dim: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(obs_dim, embed_dim * 2),
+            nn.Mish(),
+            nn.Linear(embed_dim * 2, embed_dim)
+        )
+    
+    def forward(self, x):
+        # x: [batch, timesteps, obs_dim]
+        batch_size, timesteps, obs_dim = x.shape
+        x = x.reshape(-1, obs_dim)
+        x = self.net(x)
+        x = x.reshape(batch_size, timesteps * self.net[-1].out_features)
+        return x
 
-        self.output = nn.Conv2d(up_channels[-1], out_dim, 1)
-
-    def forward(self, x, timestep):
-        t = self.time_mlp(timestep)
-        x = self.conv0(x)
-        residual_inputs = []
-        for down in self.downs:
-            x = down(x, t)
-            residual_inputs.append(x)
-        for up in self.ups:
-            residual_x = residual_inputs.pop()
-            x = torch.cat((x, residual_x), dim=1)           
-            x = up(x, t)
-        return self.output(x)
-
-def get_loss(model, x_0, t):
-    x_0 = x_0.to(device)
-    x_noisy, noise = forward_diffusion_sample(x_0, t, device)
-    noise_pred = model(x_noisy, t)
-    return F.l1_loss(noise_pred, noise)
-
-@torch.no_grad()
-def sample_timestep(x, t):
-    betas_t = get_index_from_list(betas, t, x.shape)
-    sqrt_one_minus_alphas_cumprod_t = get_index_from_list(
-        sqrt_one_minus_alphas_cumprod, t, x.shape
+def train_diffusion():
+    """Train diffusion model using HuggingFace diffusers"""
+    # Configs
+    data_config = DataConfig()
+    model_config = ModelConfig()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    num_epochs = 100
+    print(f"Using device: {device}")
+    
+    # Create dataset (from zarr file)
+    dataset = PushTStateDataset(
+        dataset_path=data_config.dataset_path,
+        pred_horizon=data_config.pred_horizon,
+        obs_horizon=data_config.obs_horizon,
+        action_horizon=data_config.action_horizon
     )
-    sqrt_recip_alphas_t = get_index_from_list(sqrt_recip_alphas, t, x.shape)
     
-    model_mean = sqrt_recip_alphas_t * (
-        x - betas_t * model(x, t) / sqrt_one_minus_alphas_cumprod_t
+    # Assign stats and define save directory
+    stats = dataset.stats
+    save_dir = "checkpoints"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    dataloader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=256,
+        num_workers=4,
+        shuffle=True,
+        pin_memory=True,
+        persistent_workers=True
     )
-    posterior_variance_t = get_index_from_list(posterior_variance, t, x.shape)
     
-    if t == 0:
-        return model_mean
-    else:
-        noise = torch.randn_like(x)
-        return model_mean + torch.sqrt(posterior_variance_t) * noise 
-
-@torch.no_grad()
-def sample_plot_image():
-    img = torch.randn((1, 3, IMG_SIZE, IMG_SIZE), device=device)
-    plt.figure(figsize=(15,15))
-    plt.axis('off')
-    num_images = 10
-    stepsize = int(T/num_images)
-
-    for i in range(0,T)[::-1]:
-        t = torch.full((1,), i, device=device, dtype=torch.long)
-        img = sample_timestep(img, t)
-        img = torch.clamp(img, -1.0, 1.0)
-        if i % stepsize == 0:
-            plt.subplot(1, num_images, int(i/stepsize)+1)
-            show_tensor_image(img.detach().cpu())
-    plt.show()
-
-# Setup device and model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using device: {device}")
-model = SimpleUnet().to(device)
-optimizer = Adam(model.parameters(), lr=0.001)
-epochs = 100
-
-print(f"Number of parameters: {sum(p.numel() for p in model.parameters())}")
-
-# Training loop with progress tracking
-from tqdm import tqdm
-import time
-
-start_time = time.time()
-
-for epoch in range(epochs):
-    avg_loss = 0
-    num_batches = len(dataloader)
+    # Create observation encoder
+    obs_encoder = ObservationEncoder(
+        obs_dim=data_config.state_dim,
+        embed_dim=model_config.obs_embed_dim
+    ).to(device)
     
-    progress_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs}")
+    # Create UNet1D model from diffusers
+    model = UNet1DModel(
+        sample_size=model_config.sample_size,
+        in_channels=model_config.total_in_channels,  # actions + conditioning
+        out_channels=model_config.out_channels,
+        layers_per_block=model_config.layers_per_block,
+        block_out_channels=model_config.block_out_channels,
+        norm_num_groups=model_config.norm_num_groups,
+        down_block_types=model_config.down_block_types,
+        up_block_types=model_config.up_block_types,
+    ).to(device)
     
-    for step, batch in enumerate(progress_bar):
-        optimizer.zero_grad()
-        batch_size = batch[0].shape[0]
-        t = torch.randint(0, T, (batch_size,), device=device).long()
-        loss = get_loss(model, batch[0], t)
-        loss.backward()
-        optimizer.step()
+    # Create noise scheduler
+    noise_scheduler = DDPMScheduler(
+        num_train_timesteps=100,
+        beta_schedule="squaredcos_cap_v2",
+        clip_sample=True,
+        prediction_type="epsilon"
+    )
+    
+    # Create projection layer OUTSIDE the training loop
+    obs_projection = nn.Linear(model_config.obs_embed_dim * data_config.obs_horizon, 
+                             model_config.obs_embed_dim // 8).to(device)
+    
+    # Update optimizer to include projection layer
+    optimizer = torch.optim.AdamW([
+        {'params': model.parameters()},
+        {'params': obs_encoder.parameters()},
+        {'params': obs_projection.parameters()}
+    ], lr=1e-4)
+    
+    # Update EMA to include projection layer
+    ema = EMAModel(
+        parameters=list(model.parameters()) + 
+                  list(obs_encoder.parameters()) + 
+                  list(obs_projection.parameters()),
+        power=0.75
+    )
+    
+    for epoch in range(num_epochs):
+        progress_bar = tqdm(total=len(dataloader), desc=f'Epoch {epoch}')
+        epoch_loss = []
         
-        avg_loss += loss.item()
-        progress_bar.set_postfix({'loss': loss.item()})
+        for batch in dataloader:
+            # Get batch data
+            obs = batch['obs'].to(device)  # [batch, obs_horizon, obs_dim]
+            actions = batch['action'].to(device)  # [batch, pred_horizon, action_dim]
+            batch_size = obs.shape[0]
+            
+            # Encode observations for conditioning
+            obs_embedding = obs_encoder(obs)  # [batch, obs_embed_dim * obs_horizon]
+            
+            # Sample noise and timesteps
+            noise = torch.randn_like(actions)
+            timesteps = torch.randint(
+                0, noise_scheduler.config.num_train_timesteps,
+                (batch_size,), device=device
+            ).long()
+            
+            # Add noise to actions according to noise schedule
+            noisy_actions = noise_scheduler.add_noise(actions, noise, timesteps)
+            
+            # Reshape to channels format for UNet
+            # [batch, pred_horizon, channels] -> [batch, channels, pred_horizon]
+            noisy_actions = noisy_actions.transpose(1, 2)
+            noise = noise.transpose(1, 2)
+            
+            # Project the observation embedding
+            obs_cond = obs_projection(obs_embedding)  # [batch, obs_embed_dim//8]
+            
+            # Reshape to match sequence length
+            obs_cond = obs_cond.unsqueeze(-1).expand(-1, -1, noisy_actions.shape[-1])
+            
+            # Concatenate along channel dimension
+            model_input = torch.cat([noisy_actions, obs_cond], dim=1)
+            
+            noise_pred = model(
+                model_input,
+                timesteps,
+            ).sample  # Removed slicing [:, :data_config.action_dim]
+            
+            # Calculate loss
+            loss = F.mse_loss(noise_pred, noise)
+            epoch_loss.append(loss.item())
+            
+            # Optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            
+            # Update EMA parameters
+            ema.step(list(model.parameters()) + 
+                     list(obs_encoder.parameters()) + 
+                     list(obs_projection.parameters()))
+            
+            # Update progress
+            progress_bar.update(1)
+            progress_bar.set_postfix(loss=loss.item())
         
-        if step == 0 and epoch % 5 == 0:
-            print(f"\nSampling images for epoch {epoch}")
-            sample_plot_image()
+        progress_bar.close()
+        
+        # Print epoch stats
+        avg_loss = sum(epoch_loss) / len(epoch_loss)
+        print(f"\nEpoch {epoch} average loss: {avg_loss:.6f}")
+        
+        # Save checkpoint every 10 epochs
+        if (epoch + 1) % 10 == 0:
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'encoder_state_dict': obs_encoder.state_dict(),
+                'projection_state_dict': obs_projection.state_dict(),
+                'ema_state_dict': ema.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                # 'noise_scheduler_state_dict': noise_scheduler.state_dict(),  # Removed
+                'stats': stats,
+                'loss': avg_loss,
+            }, os.path.join(save_dir, f'diffusion_checkpoint_{epoch}.pt'))
     
-    avg_loss /= num_batches
-    elapsed_time = time.time() - start_time
-    print(f"\nEpoch {epoch+1} completed. Average loss: {avg_loss:.4f}")
-    print(f"Time elapsed: {elapsed_time/60:.2f} minutes")
+    return model, obs_encoder, obs_projection, ema, noise_scheduler, optimizer, stats
 
-print("Training completed!")
-print(f"Total training time: {(time.time() - start_time)/60:.2f} minutes")
+def main():
+    # Download dataset if needed
+    config = DataConfig()
+    if not os.path.isfile(config.dataset_path):
+        print("Downloading dataset...")
+        gdown.download(id=config.dataset_gdrive_id, output=config.dataset_path, quiet=False)
+    
+    # Create dataset
+    dataset = PushTStateDataset(
+        dataset_path=config.dataset_path,
+        pred_horizon=config.pred_horizon,
+        obs_horizon=config.obs_horizon,
+        action_horizon=config.action_horizon
+    )
+    
+    # Test batch
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=256, num_workers=1,
+        shuffle=True, pin_memory=True, persistent_workers=True
+    )
+    batch = next(iter(dataloader))
+    print("batch['obs'].shape:", batch['obs'].shape)
+    print("batch['action'].shape:", batch['action'].shape)
+
+if __name__ == "__main__":
+    main()
+    
+    print("\nStarting diffusion model training...")
+    model, obs_encoder, obs_projection, ema, noise_scheduler, optimizer, stats = train_diffusion()
+    
+    # Save final model
+    save_dir = "checkpoints"
+    os.makedirs(save_dir, exist_ok=True)
+    torch.save({
+        'model_state_dict': model.state_dict(),
+        'encoder_state_dict': obs_encoder.state_dict(),
+        'projection_state_dict': obs_projection.state_dict(),
+        'ema_state_dict': ema.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        # 'noise_scheduler_state_dict': noise_scheduler.state_dict(), 
+        'stats': stats
+    }, os.path.join(save_dir, 'diffusion_final.pt'))
