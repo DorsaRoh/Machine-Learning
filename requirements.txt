@@ -1,0 +1,6 @@
+gym
+stable-baselines3
+numpy
+torch
+scikit-learn
+plotly
