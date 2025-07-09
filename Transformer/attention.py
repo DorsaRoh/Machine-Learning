@@ -36,7 +36,7 @@ class SelfAttention:
         """
         self.embedding_dim = embedding_dim
 
-        # Initialize weight matrices (with small random values)
+        # initialize weight matrices (with small random values)
         self.W_q = np.random.randn(embedding_dim, embedding_dim) * np.sqrt(1. / embedding_dim)
         self.W_k = np.random.randn(embedding_dim, embedding_dim) * np.sqrt(1. / embedding_dim)
         self.W_v = np.random.randn(embedding_dim, embedding_dim) * np.sqrt(1. / embedding_dim)
@@ -56,17 +56,17 @@ class SelfAttention:
         key = np.dot(embeddings, self.W_k)
         values = np.dot(embeddings, self.W_v)
 
-        # Calculate attention scores
+        # calculate attention scores
         attention_scores = self.calculate_attention_score(query, key)
 
-        # Masking
+        # masking
         if mask is not None:
             attention_scores = np.where(mask == 0, -1e9, attention_scores)      # where mask is 0, turns to -infinity. where mask is 1, keeps original values
 
-        # Apply softmax to attention scores
+        # apply softmax to attention scores
         attention_weights = softmax(attention_scores)
 
-        # Compute weighted sum of value vectors
+        # compute weighted sum of value vectors
         output = self.values_weighted_sum(attention_weights, values)
 
         return output
@@ -145,7 +145,7 @@ class MultiHeadAttention:
         Returns:
             np.ndarray: Output after applying multi-head attention and final transformation.
         """
-        # Split the embeddings into multiple heads
+        # split the embeddings into multiple heads
         sequence_length, embedding_dim = embeddings.shape
         split_embeddings = np.reshape(embeddings, (sequence_length, len(self.attention_heads), self.head_dim))
 
@@ -154,10 +154,10 @@ class MultiHeadAttention:
             head_output = head.forward(split_embeddings[:, i, :])
             head_outputs.append(head_output)
         
-        # Concatenate outputs of all heads along the last axis
+        # concatenate outputs of all heads along the last axis
         concatenated_output = np.concatenate(head_outputs, axis=-1)
         
-        # Apply final linear transformation
+        # apply final linear transformation
         output = self.linear_transformation(concatenated_output, self.W_o)
         
         return output
