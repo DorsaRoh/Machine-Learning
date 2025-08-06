@@ -24,7 +24,6 @@ To *distribute* a workload means to run it in **parallel** across multiple devic
 - **Concatenating**: **joining/aggregating** multiple shards along a dimension to **reconstruct** the **full** tensor
 - **Reduce**: **Concatenates** the shards back into the full tensor, **replicated** across all devices (ie. all devices have the full tensor now)
 
-TODO: add link to attention parallelized example at bottom somewhere here (make index maybe?)
 
 ### 1. Data Parallelism (DP)
 
@@ -33,13 +32,22 @@ In DP, each device gets a copy of the full model, but works on a different shard
 Let’s say the input tensor is shaped like:
 `tensor = [batch, height, width, dimension]`
 
+
+
+<img src="../assets/Transformers/29-latent.png" alt="Tensor vis" width="600" height="auto">
+
+<br>
+
 Then:
 
-1. **Shard** the tensor along the batch dimension → each device gets one mini-batch:
+1. **Shard** the tensor along the batch dimension (each device gets one mini-batch):
 
 `sharded_tensor = [batch / num_devices, height, width, dimension]`
 
-2. **Replicate** the model weights across all devices → every device runs the same model
+<img src="../assets/Transformers/30-DP.png" alt="Tensor vis" width="600" height="auto">
+
+
+2. **Replicate** the model weights across all devices 
 
     *To emphasize: Effectively, each device contains a replica of the model and is responsible for computing a shard (of the final output tensor).*
 
@@ -49,9 +57,10 @@ Then:
 
 4. **Concatenate** the shards to form the final output tensor
 
+
+
 > ✅ Use Data Parallelism when model weights fit on a single device, but batch size is large
 
-TODO: add excalidraw illustration here
 
 ### 2. Tensor Parallelism (TP)
 
@@ -77,9 +86,18 @@ Steps:
 > ✅ Use Tensor Parallelism when model weights are too large for a single device.
 
 
-TODO: add exclalidraw pic
+<img src="../assets/Transformers/31-TP.png" alt="Tensor vis" width="600" height="auto">
 
-TODO: add differences between DP and TP
+--- 
+### Recap: Differences between DP and TP
+
+|                       | **Data Parallelism 🧍‍🧍‍🧍‍🧍**                     | **Tensor Parallelism 🧠🔪**                         |
+|-----------------------|--------------------------------------------------|----------------------------------------------------|
+| **What is split?**    | Input data (batches)                             | Model weights           |
+| **What is replicated?** | Model weights                                      | Input data (or parts of it)                   |
+| **Goal**              | Run the **same model** on **different inputs**                   | Run **one input** by **splitting the model across devices** |
+
+---
 
 ### 3. Sequence Parallelism (SP)
 
@@ -91,7 +109,7 @@ Why use it?
 
 > ✅ Sequence Parallelism is typically applied only to specific layers like LayerNorm in large-scale TP setups.
 
-TODO: add exclalidraw pic here
+<img src="../assets/Transformers/32-SP.png" alt="Tensor vis" width="600" height="auto">
 
 ---
 
@@ -103,11 +121,10 @@ When performing Tensor Parallelism, large weight matrices are split across devic
 
 Assume we have a weight matrix `W` with shape `[input_dim, output_dim]`.
 
-TODO: add exclalidraw pic here
 
 📌 In column sharding, you split the matrix along the **output** dimension - i.e., the **columns**
 
-TODO: add exclalidaw pic here
+<img src="../assets/Transformers/33-CP.png" alt="Tensor vis" width="600" height="auto">
 
 For example, let `W = [input_dim, output_dim] = [4, 6]`. If we have 2 devices, then:
 - Device 1 gets [4, 3] 
@@ -143,7 +160,7 @@ In row sharding, we split the weight matrix `W` along the **input** dimension - 
 
 📌 That means each device holds a subset of the input features that the full matrix would have processed.
 
-TODO: add exclalidraw pic here
+<img src="../assets/Transformers/34-RP.png" alt="Tensor vis" width="600" height="auto">
 
 Assume the full weight matrix is `W = [4,6]`
 
@@ -251,6 +268,13 @@ where:
 Self-attention takes each token, lets it query all other tokens’ keys, figures out how relevant they are, then gathers the most relevant values to build a new, smarter, context-aware embedding of the token.
 
 
-- Intuitive example
+TODO: Intuitive example (smoothie example)
+
 - Technical example
 
+### Self-attention, from scratch
+
+Want to see how self-attention works from scratch?
+Check out this fully documented implementation (here)[#/distributed/attention_parallel.py]
+
+TODO: fix this link & update it to new location of this report
