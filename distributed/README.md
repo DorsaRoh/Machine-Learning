@@ -24,7 +24,7 @@ To *distribute* a workload means to run it in **parallel** across multiple devic
 - **Concatenating**: **joining/aggregating** multiple shards along a dimension to **reconstruct** the **full** tensor
 - **Reduce**: **Concatenates** the shards back into the full tensor, **replicated** across all devices (ie. all devices have the full tensor now)
 
-
+TODO: add link to attention parallelized example at bottom somewhere here (make index maybe?)
 
 ### 1. Data Parallelism (DP)
 
@@ -163,4 +163,94 @@ If we have 2 devices, then:
 |----------------|------------------------------------|---------------------------------|--------------------------------|------------------------------------------------------------------------------|
 | **Column**     | Split along **output** dimension   | Input is **replicated**         | **Concatenate** along last dim | When output can be built from feature slices (e.g., MLPs, attention outputs) |
 | **Row**        | Split along **input** dimension    | Input is **sharded/split**      | **Reduce** (e.g., sum)         | When each shard contributes to the full output (e.g., QKV projections)      |
+
+
+
+TODO: move this to transformer folder / better place
+
+## Self-Attention, parallelized
+
+
+Self-attention is used to update each token’s embedding to include **ITS CONTEXT**.
+Each output vector is a **contextualized representation of a token**, meaning it **encodes the original token plus relevant information from all other tokens**, so the model can understand the meaning of each token in context, not in isolation.
+
+Self-attention is a sequence-to-sequence operation: a sequence of vectors goes in, and a sequence of vectors comes out.
+
+
+
+### High level steps of self-attention:
+
+1. **Each token is projected into 3 vectors (3 distinct pieces of information about it)**
+    - **Query (Q)**: what the current token is looking for in other tokens
+    - **Key (K)**:  how each token describes itself *(acting as a label that tells other tokens what kind of information it has to offer if they decide to pay attention to it)*
+    - **Value (V)**: the actual information a token provides if it's chosen
+
+These are computed as linear projections:
+```
+Q = x @ Weights_Q
+K = x @ Weights_K
+V = x @ Weights_V
+```
+
+TODO: add exclaidraw pic (each vector & matrix with embedding dims)
+
+2. **Compute attention scores (relevance between tokens)**
+
+To determine which *other* tokens are most relvant to the *current* token, calculate the similarity between the current token's `Q` (what its looking for) and every other token's `K` (what they can offer). 
+
+So for each token, we compare its `Q` to every other token’s `K` using a dot product:
+`score[i][j] = dot(Q_i, K_j)`
+
+This gives us a matrix of attention scores - raw relevance scores between every token pair.
+
+Then, we apply softmax to each row (i.e., for each token’s scores over the others):
+
+TODO: add exclalidarw pic
+
+`attention_weights = softmax(score)`
+
+
+>This turns the raw scores into a probability distribution - i.e., a set of weights that sum to 1, indicating how much each token should pay attention to others (like a percentage). This is handy for the weighted average in the next step.
+
+> Recall: A weighted average gives different importance to each value.
+For example, given values [2, 5, 9] and weights [0.1, 0.3, 0.6], the weighted average is: 
+`(0.1 x 2) + (0.3 x 5) + (0.6 x 9) = 7.1`
+
+TODO: add exclaidraw pic
+
+3. **Apply attention weights to Value vectors**
+
+Now, each token will actually get what it wants from the other tokens.
+This is done by taking the **weighted sum** of the attention weights and the `V` vectors.
+
+I.e. for token `i`, compute the weighted sum of all the Value vectors `V_j` and the attention matrix `W_qk` *(derived from step 2: Q · K and softmax)*:
+
+`output_i = (W_qk[i][0] * V_0) + (W_qk[i][1] * V_1) + (W_qk[i][2] * V_2) + ... + (W_qk[i][n] * V_n)`
+
+Or more compactly:
+
+    output_i = sum over j of ( W_qk[i][j] * V_j )
+
+Where:
+- `W_qk[i][j]` is the attention weight from token `i` to token `j`
+- `V_j` is the Value vector of token `j`
+- `output_i` is the final context-aware embedding for token `i`
+
+TODO: add exclaidraw pic
+
+4. **Output**
+
+The output is a sequence of vectors, where each vector represents the original tokens **WITH ITS CONTEXT** (i.e. each vector is a contextualized representation of a token, meaning it **encodes the original token plus relevant information from all other tokens**.)
+
+The shape of the output is: `[sequence_length, hidden_dim]`
+where:
+- `sequence_length`: the number of tokens in the input / length of input sequence
+- `hidden_dim`: the dimension of the Value vectors (typically same as input embedding dim)
+
+#### In summary: 
+Self-attention takes each token, lets it query all other tokens’ keys, figures out how relevant they are, then gathers the most relevant values to build a new, smarter, context-aware embedding of the token.
+
+
+- Intuitive example
+- Technical example
 
