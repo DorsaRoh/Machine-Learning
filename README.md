@@ -191,7 +191,8 @@ Training a neural network involves repeating these steps many times:
 After many iterations, the network learns to recognize patterns in the training data and can apply this knowledge to new, unseen data.
 
 For example: in digit recognition, each layer of the neural network can learn to detect common shapes (such as loops, curves, and vertical lines) that act as building blocks for recognizing all digits.
- <img src="assets/Neural-Networks/1-NN.png" alt="Neural Network Architecture" width="300" height="auto">
+
+<img src="assets/Neural-Networks/1-NN.png" alt="Neural Network Architecture" width="300" height="auto">
 
 
 ## A Simple Python Implementation
