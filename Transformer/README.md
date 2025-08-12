@@ -212,6 +212,153 @@ Value: vector that holds the actual info that will be passed along the next laye
 ![Value Embedding 3](../assets/Transformers/27-valueEmbedding3.png)
 ![Value Embedding 4](../assets/Transformers/28-valueEmbedding4.png)
 
+## Self Attention
+
+Self-attention is used to update each token’s embedding to include **ITS CONTEXT**.
+Each output vector is a **contextualized representation of a token**, meaning it **encodes the original token plus relevant information from all other tokens**, so the model can understand the meaning of each token in context, not in isolation.
+
+Self-attention is a sequence-to-sequence operation: a sequence of vectors goes in, and a sequence of vectors comes out.
+
+
+
+### High level steps of self-attention:
+
+1. **Each token is projected into 3 vectors (3 distinct pieces of information about it)**
+    - **Query (Q)**: what the current token is looking for in other tokens
+    - **Key (K)**:  how each token describes itself *(acting as a label that tells other tokens what kind of information it has to offer if they decide to pay attention to it)*
+    - **Value (V)**: the actual information a token provides if it's chosen
+
+These are computed as linear projections:
+```
+Q = x @ Weights_Q
+K = x @ Weights_K
+V = x @ Weights_V
+```
+
+> *Projection: a linear transformation that maps a vector space onto a subspace, such that applying the transformation twice produces the same result as applying it once. It can be visualized as the "shadow" of a vector onto a line or subspace, representing the component of the vector that lies in the direction of that subspace*
+
+2. **Compute attention scores (relevance between tokens)**
+
+To determine which *other* tokens are most relvant to the *current* token, calculate the similarity between the current token's `Q` (what its looking for) and every other token's `K` (what they can offer). 
+
+So for each token, we compare its `Q` to every other token’s `K` using a dot product:
+`score[i][j] = dot(Q_i, K_j)`
+
+This gives us a matrix of attention scores - raw relevance scores between every token pair.
+
+Then, we apply softmax to each row (i.e., for each token’s scores over the others):
+
+
+`attention_weights = softmax(score)`
+
+
+>This turns the raw scores into a probability distribution - i.e., a set of weights that sum to 1, indicating how much each token should pay attention to others (like a percentage). This is handy for the weighted average in the next step.
+
+> *Recall: A weighted average gives different importance to each value.
+For example, given values [2, 5, 9] and weights [0.1, 0.3, 0.6], the weighted average is: 
+`(0.1 x 2) + (0.3 x 5) + (0.6 x 9) = 7.1`*
+
+
+3. **Apply attention weights to Value vectors**
+
+Now, each token will actually get what it wants from the other tokens.
+This is done by taking the **weighted sum** of the attention weights and the `V` vectors.
+
+I.e. for token `i`, compute the weighted sum of all the Value vectors `V_j` and the attention matrix `W_qk` *(derived from step 2: Q · K and softmax)*:
+
+`output_i = (W_qk[i][0] * V_0) + (W_qk[i][1] * V_1) + (W_qk[i][2] * V_2) + ... + (W_qk[i][n] * V_n)`
+
+Or more compactly:
+
+    output_i = sum over j of ( W_qk[i][j] * V_j )
+
+Where:
+- `W_qk[i][j]` is the attention weight from token `i` to token `j`
+- `V_j` is the Value vector of token `j`
+- `output_i` is the final context-aware embedding for token `i`
+
+
+4. **Output**
+
+The output is a sequence of vectors, where each vector represents the original tokens **WITH ITS CONTEXT** (i.e. each vector is a contextualized representation of a token, meaning it **encodes the original token plus relevant information from all other tokens**.)
+
+The shape of the output is: `[sequence_length, hidden_dim]`
+where:
+- `sequence_length`: the number of tokens in the input / length of input sequence
+- `hidden_dim`: the dimension of the Value vectors (typically same as input embedding dim)
+
+| Term          | When it’s used                     | Meaning                                   |
+|---------------|------------------------------------|-------------------------------------------|
+| embedding_dim | Input layer                        | Dimensionality of token embeddings        |
+| hidden_dim    | Inside model (transformer layers)  | Dimensionality of internal representations |
+
+
+#### In summary: 
+Self-attention takes each token, lets it query all other tokens’ keys, figures out how relevant they are, then gathers the most relevant values to build a new, smarter, context-aware embedding of the token.
+
+
+
+Below is an implementation of self-attention, from scratch!
+```
+from transformers import AutoTokenizer, AutoModel
+import torch
+from torch import nn
+
+
+input_text = "Despite everything, it's still you."
+
+# 1. Get input embeddings
+
+# Tokenize input
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+input_tokens = tokenizer(input_text, return_tensors="pt")
+print(input_tokens)
+
+# Get raw input embeddings from tokenized input
+model = AutoModel.from_pretrained("bert-base-uncased")
+outputs = model(**input_tokens)
+
+input_embeddings = outputs.last_hidden_state  # shape: [batch, seq_len, embedding_dim]
+
+
+# 2. Get Q, K, V
+
+# Initialize projection matrices
+hidden_dim = input_embeddings.shape[2]      # dimensionality of full model layer (768)
+head_dim = 64                               # dimensionality of each attention head (64 * 12 heads = 768)
+
+W_q = nn.Linear(hidden_dim, head_dim, bias=False)   # input @ W.T
+W_k = nn.Linear(hidden_dim, head_dim, bias=False)
+W_v = nn.Linear(hidden_dim, head_dim, bias=False)
+
+# Get projections Q, K, V from input
+Q = W_q(input_embeddings)
+K = W_k(input_embeddings)
+V = W_v(input_embeddings)
+
+print(Q.shape)
+print(K.shape)
+
+# 3. Get attention scores
+
+# calculate attention scores 
+K_transposed = K.transpose(-2, -1)      # [batch, seq_len, head_dim] -> [batch, head_dim, seq_len]
+attention_scores = torch.matmul(Q, K_transposed)    # Q: [batch, seq_len, head_dim] x K.T: [batch, head_dim, seq_len] -> [batch, seq_len, seq_len]
+
+# apply softmax to normalize attention weights
+normalize = nn.Softmax(dim=-1)
+attention_weights = normalize(attention_scores / (head_dim ** 0.5))
+
+
+# 4. Get output 
+
+# calculate output vectors: weighted sum of (W_qk) and V vectors
+output_tensors = torch.matmul(attention_weights, V)  # shape: [batch, seq_len, head_dim]
+print(output_tensors)
+```
+
+
+
 ## Multi-Head Attention
 
 An Attention block is made up of many Attention heads running in parallel (multi-headed attention)
