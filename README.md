@@ -11,7 +11,7 @@ Implementations of ML, using only numpy.
 
 In the context of artificial neural networks:
 - A neuron is a simple unit that holds a number
-- This number is called its "activation"
+- This number is called its *"activation"*
 
 ### What is a Neural Network?
 
@@ -189,6 +189,10 @@ Training a neural network involves repeating these steps many times:
 4. Update weights and biases: Make small adjustments to improve performance
 
 After many iterations, the network learns to recognize patterns in the training data and can apply this knowledge to new, unseen data.
+
+For example: in digit recognition, each layer of the neural network can learn to detect common shapes (such as loops, curves, and vertical lines) that act as building blocks for recognizing all digits.
+ <img src="assets/Neural-Networks/1-NN.png" alt="Neural Network Architecture" width="300" height="auto">
+
 
 ## A Simple Python Implementation
 
