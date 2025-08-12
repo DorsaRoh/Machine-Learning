@@ -3,6 +3,7 @@ Implementations of ML, using only numpy.
 
 1. [Neural Networks](#neural-networks)
 2. [Transformer](#transformer)
+3. [Distributed models](#distributed)
 
 
 
