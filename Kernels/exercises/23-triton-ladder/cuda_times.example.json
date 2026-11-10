@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy to cuda_times.json and replace with YOUR measured medians, in ms, from the CUDA exercises at the same shapes the harness uses: add = 02-vector-add at n=2^24, sum = 07-reduce at n=2^24, softmax = 10-softmax at [8192,1024], layernorm = 10-layernorm at [8192,1024]. Numbers below are placeholders from an A100 and are not yours.",
+  "add": 0.620,
+  "sum": 0.230,
+  "softmax": 0.480,
+  "layernorm": 0.510
+}

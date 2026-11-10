@@ -1,0 +1,16 @@
+# Build artifacts from `make run` / `make debug`
+exercise
+exercise-debug
+*.o
+*.dSYM/
+
+# Profiler output
+*.ncu-rep
+*.nsys-rep
+*.sqlite
+*.ptx
+*.sass
+*.cubin
+
+# Student-generated, deliberately not shared
+cuda_times.json
